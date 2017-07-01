@@ -4,7 +4,7 @@ using System.ComponentModel;
 using System.Configuration.Install;
 using System.ServiceProcess;
 
-namespace net.vieapps.Services.WAMPRouter
+namespace net.vieapps.Services.Utility.WAMPRouter
 {
 	[RunInstaller(true)]
 	public partial class ProjectInstaller : Installer
@@ -23,9 +23,9 @@ namespace net.vieapps.Services.WAMPRouter
 			this.Installers.Add(new ServiceInstaller()
 			{
 				StartType = ServiceStartMode.Automatic,
-				DisplayName = "VIEApps NGX WAMP Router",
-				Description = "RPC and Pub/Sub routing via WAMP protocol",
-				ServiceName = "VIEAppsWAMPRouter"
+				ServiceName = "VIEAppsWAMPRouter",
+				DisplayName = "VIEApps WAMP Router",
+				Description = "Router for serving messages of RPC and Pub/Sub via WAMP protocol"
 			});
 
 			this.AfterInstall += new InstallEventHandler(this.StartServiceAfterInstall);
@@ -35,13 +35,12 @@ namespace net.vieapps.Services.WAMPRouter
 		{
 			try
 			{
-				using (var serviceController = new ServiceController("VIEAppsWAMPRouter"))
+				using (var controller = new ServiceController("VIEAppsWAMPRouter"))
 				{
-					serviceController.Start();
+					controller.Start();
 				}
 			}
 			catch { }
 		}
-
 	}
 }

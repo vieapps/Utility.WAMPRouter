@@ -1,4 +1,4 @@
-namespace net.vieapps.Services.WAMPRouter
+namespace net.vieapps.Services.Utility.WAMPRouter
 {
 	partial class ServiceRunner
 	{
