@@ -25,7 +25,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 		/// </summary>
 		private void InitializeComponent()
 		{
-			this.ServiceName = "VIEAppsWAMPRouter";
+			this.ServiceName = "VIEApps-WAMP-Router";
 		}
 
 	}

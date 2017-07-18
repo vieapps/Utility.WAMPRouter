@@ -30,4 +30,4 @@ using System.Runtime.InteropServices;
 //
 [assembly: AssemblyVersion("10.1")]
 [assembly: AssemblyFileVersion("10.1")]
-[assembly: AssemblyInformationalVersion("10.1.ngxv-2017.07.01")]
+[assembly: AssemblyInformationalVersion("10.1.dmap-2017.07.18")]

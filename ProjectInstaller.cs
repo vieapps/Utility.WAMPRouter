@@ -23,7 +23,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			this.Installers.Add(new ServiceInstaller()
 			{
 				StartType = ServiceStartMode.Automatic,
-				ServiceName = "VIEAppsWAMPRouter",
+				ServiceName = "VIEApps-WAMP-Router",
 				DisplayName = "VIEApps WAMP Router",
 				Description = "Router for serving messages of RPC and Pub/Sub via WAMP protocol"
 			});
@@ -35,7 +35,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 		{
 			try
 			{
-				using (var controller = new ServiceController("VIEAppsWAMPRouter"))
+				using (var controller = new ServiceController("VIEApps-WAMP-Router"))
 				{
 					controller.Start();
 				}
