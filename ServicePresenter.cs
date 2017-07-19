@@ -25,6 +25,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 				args = new string[] { "/async:true" };
 
 			this.CommandLine.Text = "VIEApps.WAMPRouter.exe " + string.Join(" ", args).Trim();
+			this.CommandLine.SelectionStart = this.CommandLine.TextLength;
 
 			// update logs
 			this.UpdateLogs("The VIEApps WAMP Router is now running as a Windows desktop app" + "\r\n");

@@ -27,7 +27,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 		{
 			// initialize log
 			if (Program.AsService)
-				Helper.InitializeEventLog();
+				Helper.InitializeLog();
 
 			// prepare
 			var useAsync = "false";
@@ -86,7 +86,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 
 			// close log
 			if (Program.AsService)
-				Helper.DisposeEventLog();
+				Helper.DisposeLog();
 		}
 		#endregion
 
