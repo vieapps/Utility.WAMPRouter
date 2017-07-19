@@ -12,7 +12,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 		static void Main(string[] args)
 		{
 			if (Program.AsService)
-				ServiceBase.Run(new ServiceBase[] { new ServiceRunner() });
+				ServiceBase.Run(new ServiceRunner());
 			else
 			{
 				Application.EnableVisualStyles();

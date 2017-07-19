@@ -1,9 +1,9 @@
 using System;
+using System.Text;
+using System.Linq;
 using System.Collections.Generic;
 using System.ServiceProcess;
 using System.Diagnostics;
-using System.Text;
-using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace net.vieapps.Services.Utility.WAMPRouter
@@ -12,7 +12,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 	{
 		static EventLog EventLog = null;
 
-		internal static void InitializeEventLog()
+		internal static void InitializeLog()
 		{
 			if (Helper.EventLog == null)
 			{
@@ -30,7 +30,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			}
 		}
 
-		internal static void DisposeEventLog()
+		internal static void DisposeLog()
 		{
 			Helper.EventLog.Close();
 			Helper.EventLog.Dispose();
@@ -112,6 +112,5 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 				? - 1
 				: process.Item1;
 		}
-
 	}
 }
