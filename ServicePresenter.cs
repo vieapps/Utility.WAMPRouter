@@ -10,9 +10,11 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 
 		public ServicePresenter()
 		{
-			// initialize
 			this.InitializeComponent();
+		}
 
+		private void ServicePresenter_Load(object sender, EventArgs e)
+		{
 			// prepare arguments
 			var args = Environment.GetCommandLineArgs();
 			if (args != null && args.Length > 1)
@@ -68,6 +70,5 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 				this.Logs.ScrollToCaret();
 			}
 		}
-
 	}
 }

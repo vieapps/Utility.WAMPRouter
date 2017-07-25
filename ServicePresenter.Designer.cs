@@ -71,6 +71,7 @@
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			this.Text = "VIEApps WAMP Router";
 			this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.ServicePresenter_FormClosed);
+			this.Load += new System.EventHandler(this.ServicePresenter_Load);
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
