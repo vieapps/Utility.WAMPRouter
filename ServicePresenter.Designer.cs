@@ -42,7 +42,7 @@
 			this.Logs.Name = "Logs";
 			this.Logs.ReadOnly = true;
 			this.Logs.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-			this.Logs.Size = new System.Drawing.Size(1439, 646);
+			this.Logs.Size = new System.Drawing.Size(968, 624);
 			this.Logs.TabIndex = 2;
 			// 
 			// CommandLine
@@ -53,14 +53,14 @@
 			this.CommandLine.Name = "CommandLine";
 			this.CommandLine.ReadOnly = true;
 			this.CommandLine.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-			this.CommandLine.Size = new System.Drawing.Size(1439, 31);
+			this.CommandLine.Size = new System.Drawing.Size(968, 31);
 			this.CommandLine.TabIndex = 1;
 			// 
 			// ServicePresenter
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(1470, 724);
+			this.ClientSize = new System.Drawing.Size(998, 697);
 			this.Controls.Add(this.CommandLine);
 			this.Controls.Add(this.Logs);
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
