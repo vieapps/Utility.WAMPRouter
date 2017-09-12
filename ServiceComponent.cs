@@ -19,7 +19,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 		IWampHost _wampHost = null;
 		IWampHostedRealm _wampHostedRealm = null;
 		string _wampAddress = null, _wampRealm = null;
-		const string _wampVersion = "1.2.5.41-beta";
+		const string _wampVersion = "1.2.5.43-beta";
 		int _counters = 0;
 
 		#region Start/Stop
