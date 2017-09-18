@@ -19,7 +19,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 		IWampHost _wampHost = null;
 		IWampHostedRealm _wampHostedRealm = null;
 		string _wampAddress = null, _wampRealm = null;
-		const string _wampVersion = "1.2.5.43-beta";
+		const string _wampVersion = "1.2.6.43-beta";
 		int _counters = 0;
 
 		#region Start/Stop
@@ -108,7 +108,14 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 				}
 #endif
 				this._wampHost.Open();
-				Helper.WriteLog("VIEApps WAMP Router is ready for serving..." + "\r\n" + "- Mode: SYNC" + "\r\n" + "- Address: " + this._wampAddress + "\r\n" + "- Realm: " + this._wampRealm + "\r\n" + "- PID: " + Process.GetCurrentProcess().Id.ToString() + "\r\n" + "- WampSharp version: " + _wampVersion);
+				Helper.WriteLog(
+					"VIEApps WAMP Router is ready for serving..." + "\r\n" + 
+					"- Mode: SYNC" + "\r\n" + 
+					"- Address: " + this._wampAddress + "\r\n" + 
+					"- Realm: " + this._wampRealm + "\r\n" + 
+					"- PID: " + Process.GetCurrentProcess().Id.ToString() + "\r\n" + 
+					"- WampSharp version: " + _wampVersion
+				);
 			}
 			catch (Exception ex)
 			{
@@ -134,7 +141,14 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 					}
 #endif
 					this._wampHost.Open();
-					Helper.WriteLog("VIEApps WAMP Router is ready for serving..." + "\r\n" + "- Mode: ASYNC" + "\r\n" + "- Address: " + this._wampAddress + "\r\n" + "- Realm: " + this._wampRealm + "\r\n" + "- PID: " + Process.GetCurrentProcess().Id.ToString() + "\r\n" + "- WampSharp version: " + _wampVersion);
+					Helper.WriteLog(
+						"VIEApps WAMP Router is ready for serving..." + "\r\n" + 
+						"- Mode: ASYNC" + "\r\n" + 
+						"- Address: " + this._wampAddress + "\r\n" + 
+						"- Realm: " + this._wampRealm + "\r\n" + 
+						"- PID: " + Process.GetCurrentProcess().Id.ToString() + "\r\n" + 
+						"- WampSharp version: " + _wampVersion
+					);
 
 					while (true)
 						await Task.Delay(12345, this._cts.Token);
@@ -173,7 +187,11 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 		void OnSessionCreated(object sender, WampSessionCreatedEventArgs args)
 		{
 			this._counters++;
-			Helper.WriteLog("\r\n" + "A session is opened..." + "\r\n" + "- Session ID: " + args.SessionId.ToString() + "\r\n" + "- Connections: " + this._counters.ToString("###,##0"));
+			Helper.WriteLog(
+				"A session is opened..." + "\r\n" + 
+				"- Session ID: " + args.SessionId.ToString() + "\r\n" + 
+				"- Connections: " + this._counters.ToString("###,##0")
+			);
 		}
 
 		void OnSessionClosed(object sender, WampSessionCloseEventArgs args)
@@ -181,7 +199,13 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			this._counters--;
 			if (this._counters < 0)
 				this._counters = 0;
-			Helper.WriteLog("\r\n" + "A session is closed..." + "\r\n" + "- Session ID: " + args.SessionId.ToString() + "\r\n" + "- Reason: " + args.Reason + "\r\n" + "- Type: " + args.CloseType.ToString() + "\r\n" + "- Connections: " + this._counters.ToString("###,##0"));
+			Helper.WriteLog(
+				"A session is closed..." + "\r\n" + 
+				"- Session ID: " + args.SessionId.ToString() + "\r\n" + 
+				"- Reason: " + args.Reason + "\r\n" + 
+				"- Type: " + args.CloseType.ToString() + "\r\n" + 
+				"- Connections: " + this._counters.ToString("###,##0")
+			);
 		}
 		#endregion
 
