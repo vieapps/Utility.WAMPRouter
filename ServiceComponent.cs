@@ -49,11 +49,11 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			}
 
 			// default settings
-			if (string.IsNullOrEmpty(this._wampAddress))
-				this._wampAddress = "ws://127.0.0.1:26429/";
+			if (string.IsNullOrWhiteSpace(this._wampAddress))
+				this._wampAddress = ConfigurationManager.AppSettings["Address"] ?? "ws://127.0.0.1:26429/";
 
-			if (string.IsNullOrEmpty(this._wampRealm))
-				this._wampRealm = "VIEAppsRealm";
+			if (string.IsNullOrWhiteSpace(this._wampRealm))
+				this._wampRealm = ConfigurationManager.AppSettings["Realm"] ?? "VIEAppsRealm";
 
 			// open the hosting of the WAMP router
 			if (!string.IsNullOrWhiteSpace(useAsync) && useAsync.ToLower().Equals("true"))
