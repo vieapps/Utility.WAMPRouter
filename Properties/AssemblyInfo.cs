@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following set of attributes.
 // Change these attribute values to modify the information associated with an assembly.
 [assembly: AssemblyTitle("VIEApps WAMP Router")]
-[assembly: AssemblyDescription("Router for serving messages of RPC and Pub/Sub via WAMP protocol")]
+[assembly: AssemblyDescription("Router for serving messages of RPC and Pub/Sub via web application messaging protocol (WAMP)")]
 [assembly: AssemblyDefaultAlias("VIEApps.Services.Utility.WAMPRouter")]
 [assembly: AssemblyConfiguration("Production/Stable")]
 [assembly: AssemblyCompany("VIEApps.net")]
@@ -26,4 +26,4 @@ using System.Runtime.InteropServices;
 //
 [assembly: AssemblyVersion("10.1")]
 [assembly: AssemblyFileVersion("10.1")]
-[assembly: AssemblyInformationalVersion("10.1.wfap-2017.07.20")]
+[assembly: AssemblyInformationalVersion("10.1.lcmp-2017.09.30")]

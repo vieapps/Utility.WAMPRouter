@@ -25,7 +25,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 				StartType = ServiceStartMode.Automatic,
 				ServiceName = "VIEApps-WAMP-Router",
 				DisplayName = "VIEApps WAMP Router",
-				Description = "Router for serving messages of RPC and Pub/Sub via WAMP protocol"
+				Description = "Router for serving messages of RPC and Pub/Sub via web application messaging protocol (WAMP)"
 			});
 
 			this.AfterInstall += new InstallEventHandler(this.StartServiceAfterInstall);
