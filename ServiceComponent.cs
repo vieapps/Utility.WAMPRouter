@@ -66,6 +66,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			}
 			else
 			{
+				this._cts?.Dispose();
 				this._cts = null;
 				this.OpenRouter();
 			}
@@ -178,10 +179,9 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 				this._wampHostedRealm = null;
 			}
 
-			if (this._cts != null)
-				this._cts.Cancel();
-			else if (this._wampHost != null)
-				this._wampHost.Dispose();
+			this._wampHost?.Dispose();
+			this._cts?.Cancel();
+			this._cts?.Dispose();
 		}
 
 		void OnSessionCreated(object sender, WampSessionCreatedEventArgs args)
@@ -190,7 +190,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			Helper.WriteLog(
 				"A session is opened..." + "\r\n" + 
 				"- Session ID: " + args.SessionId.ToString() + "\r\n" + 
-				"- Connections: " + this._counters.ToString("###,##0")
+				"- Total of connections: " + this._counters.ToString("###,##0")
 			);
 		}
 
@@ -203,8 +203,8 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 				"A session is closed..." + "\r\n" + 
 				"- Session ID: " + args.SessionId.ToString() + "\r\n" + 
 				"- Reason: " + args.Reason + "\r\n" + 
-				"- Type: " + args.CloseType.ToString() + "\r\n" + 
-				"- Connections: " + this._counters.ToString("###,##0")
+				"- Type: " + args.CloseType.ToString() + "\r\n" +
+				"- Total of connections: " + this._counters.ToString("###,##0")
 			);
 		}
 		#endregion
