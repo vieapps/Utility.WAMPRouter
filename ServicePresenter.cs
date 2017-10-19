@@ -24,14 +24,14 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 				tmp.CopyTo(args, 1);
 			}
 			else
-				args = new string[] { "/async:true" };
+				args = new string[] { };
 
 			this.CommandLine.Text = "VIEApps.WAMPRouter.exe " + string.Join(" ", args).Trim();
 			this.CommandLine.SelectionStart = this.CommandLine.TextLength;
 
 			// update logs
 			this.UpdateLogs("The VIEApps WAMP Router is now running as a Windows desktop app" + "\r\n");
-			this.UpdateLogs("Args syntax: VIEApps.WAMPRouter.exe /address:<ws://ip:port> /realm:<realm-name> /async:<true|false>" + "\r\n");
+			this.UpdateLogs("Args syntax: VIEApps.WAMPRouter.exe /address:<ws://ip:port> /realm:<realm-name>" + "\r\n");
 			this.UpdateLogs("To install as a Windows service, use the InstallUtil.exe in the command prompt as \"InstallUtil /i VIEApps.WAMPRouter.exe\" (with Administrator privileges)");
 			this.UpdateLogs("--------------------------------------------------------------------" + "\r\n");
 			this.UpdateLogs("OUTPUT:" + "\r\n");

@@ -15,14 +15,13 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 	{
 		public ServiceComponent() { }
 
-		CancellationTokenSource _cts = null;
 		IWampHost _wampHost = null;
 		IWampHostedRealm _wampHostedRealm = null;
-		string _wampAddress = null, _wampRealm = null;
-		const string _wampVersion = "1.2.6.43-beta";
-		int _counters = 0;
 
-		#region Start/Stop
+		string _wampAddress = null, _wampRealm = null;
+		string _componentVersion = "1.2.6.44-b";
+		int _connectionCounters = 0;
+
 		internal void Start(string[] args)
 		{
 			// initialize log
@@ -30,7 +29,6 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 				Helper.InitializeLog();
 
 			// prepare
-			var useAsync = "false";
 			if (args != null && args.Length > 0)
 				for (var index = 0; index < args.Length; index++)
 				{
@@ -38,38 +36,72 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 						this._wampAddress = args[index].Substring(args[index].IndexOf(":") + 1);
 					else if (args[index].StartsWith("/realm:"))
 						this._wampRealm = args[index].Substring(args[index].IndexOf(":") + 1);
-					else if (args[index].StartsWith("/async:"))
-						useAsync = args[index].Substring(args[index].IndexOf(":") + 1);
 				}
 			else
 			{
 				this._wampAddress = ConfigurationManager.AppSettings["Address"];
 				this._wampRealm = ConfigurationManager.AppSettings["Realm"];
-				useAsync = ConfigurationManager.AppSettings["UseAsync"];
 			}
 
 			// default settings
 			if (string.IsNullOrWhiteSpace(this._wampAddress))
-				this._wampAddress = ConfigurationManager.AppSettings["Address"] ?? "ws://127.0.0.1:26429/";
+				this._wampAddress = "ws://127.0.0.1:26429/";
 
 			if (string.IsNullOrWhiteSpace(this._wampRealm))
-				this._wampRealm = ConfigurationManager.AppSettings["Realm"] ?? "VIEAppsRealm";
+				this._wampRealm = "VIEAppsRealm";
 
 			// open the hosting of the WAMP router
-			if (!string.IsNullOrWhiteSpace(useAsync) && useAsync.ToLower().Equals("true"))
+			try
 			{
-				this._cts = new CancellationTokenSource();
-				Task.Run(async () =>
+				this._wampHost = new DefaultWampHost(this._wampAddress);
+				this._wampHostedRealm = this._wampHost.RealmContainer.GetRealmByName(this._wampRealm);
+
+#if DEBUG || SESSIONLOGS
+				this._wampHostedRealm.SessionCreated += this.OnSessionCreated;
+				this._wampHostedRealm.SessionClosed += this.OnSessionClosed;
+#else
+				if (!Program.AsService)
 				{
-					await this.OpenRouterAsync();
-				}).ConfigureAwait(false);
+					this._wampHostedRealm.SessionCreated += this.OnSessionCreated;
+					this._wampHostedRealm.SessionClosed += this.OnSessionClosed;
+				}
+#endif
+
+				this._wampHost.Open();
+				Helper.WriteLog(
+					"VIEApps WAMP Router is ready for serving [PID: " + Process.GetCurrentProcess().Id.ToString() + "]" + "\r\n" +
+					"- URI: " + this._wampAddress + this._wampRealm + "\r\n" + 
+					"- WampSharp: v" + this._componentVersion
+				);
 			}
-			else
+			catch (Exception ex)
 			{
-				this._cts?.Dispose();
-				this._cts = null;
-				this.OpenRouter();
+				Helper.WriteLog("Error occured while starting VIEApps WAMP Router", ex);
 			}
+		}
+
+		void OnSessionCreated(object sender, WampSessionCreatedEventArgs args)
+		{
+			this._connectionCounters++;
+			Helper.WriteLog(
+				"A session is opened..." + "\r\n" + 
+				"- Session ID: " + args.SessionId.ToString() + "\r\n" + 
+				"- Total of connections: " + this._connectionCounters.ToString("###,##0")
+			);
+		}
+
+		void OnSessionClosed(object sender, WampSessionCloseEventArgs args)
+		{
+			this._connectionCounters--;
+			if (this._connectionCounters < 0)
+				this._connectionCounters = 0;
+			Helper.WriteLog(
+				"A session is closed..." + "\r\n" + 
+				"- Session ID: " + args.SessionId.ToString() + "\r\n" + 
+				"- Reason: " + args.Reason + "\r\n" + 
+				"- Type: " + args.CloseType.ToString() + "\r\n" +
+				"- Total of connections: " + this._connectionCounters.ToString("###,##0")
+			);
 		}
 
 		internal void Stop()
@@ -77,7 +109,23 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			// stop the hosting of the router
 			try
 			{
-				this.CloseRouter();
+				if (this._wampHostedRealm != null)
+				{
+#if DEBUG || SESSIONLOGS
+				this._wampHostedRealm.SessionCreated -= this.OnSessionCreated;
+				this._wampHostedRealm.SessionClosed -= this.OnSessionClosed;
+#else
+					if (!Program.AsService)
+					{
+						this._wampHostedRealm.SessionCreated -= this.OnSessionCreated;
+						this._wampHostedRealm.SessionClosed -= this.OnSessionClosed;
+					}
+#endif
+					this._wampHostedRealm = null;
+				}
+
+				this._wampHost?.Dispose();
+
 				Helper.WriteLog("VIEApps WAMP Router is closed....");
 			}
 			catch (Exception ex)
@@ -89,125 +137,6 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			if (Program.AsService)
 				Helper.DisposeLog();
 		}
-		#endregion
-
-		#region Open/Close the hosting of the router
-		void OpenRouter()
-		{
-			try
-			{
-				this._wampHost = new DefaultWampHost(this._wampAddress);
-				this._wampHostedRealm = this._wampHost.RealmContainer.GetRealmByName(this._wampRealm);
-#if DEBUG || SESSIONLOGS
-				this._wampHostedRealm.SessionCreated += this.OnSessionCreated;
-				this._wampHostedRealm.SessionClosed += this.OnSessionClosed;
-#else
-				if (!Program.AsService)
-				{
-					this._wampHostedRealm.SessionCreated += this.OnSessionCreated;
-					this._wampHostedRealm.SessionClosed += this.OnSessionClosed;
-				}
-#endif
-				this._wampHost.Open();
-				Helper.WriteLog(
-					"VIEApps WAMP Router is ready for serving..." + "\r\n" + 
-					"- Mode: SYNC" + "\r\n" + 
-					"- Address: " + this._wampAddress + "\r\n" + 
-					"- Realm: " + this._wampRealm + "\r\n" + 
-					"- PID: " + Process.GetCurrentProcess().Id.ToString() + "\r\n" + 
-					"- WampSharp version: " + _wampVersion
-				);
-			}
-			catch (Exception ex)
-			{
-				Helper.WriteLog("Error occured while starting VIEApps WAMP Router", ex);
-			}
-		}
-
-		async Task OpenRouterAsync()
-		{
-			using (this._wampHost = new DefaultWampHost(this._wampAddress))
-			{
-				try
-				{
-					this._wampHostedRealm = this._wampHost.RealmContainer.GetRealmByName(this._wampRealm);
-#if DEBUG || SESSIONLOGS
-					this._wampHostedRealm.SessionCreated += this.OnSessionCreated;
-					this._wampHostedRealm.SessionClosed += this.OnSessionClosed;
-#else
-					if (!Program.AsService)
-					{
-						this._wampHostedRealm.SessionCreated += this.OnSessionCreated;
-						this._wampHostedRealm.SessionClosed += this.OnSessionClosed;
-					}
-#endif
-					this._wampHost.Open();
-					Helper.WriteLog(
-						"VIEApps WAMP Router is ready for serving..." + "\r\n" + 
-						"- Mode: ASYNC" + "\r\n" + 
-						"- Address: " + this._wampAddress + "\r\n" + 
-						"- Realm: " + this._wampRealm + "\r\n" + 
-						"- PID: " + Process.GetCurrentProcess().Id.ToString() + "\r\n" + 
-						"- WampSharp version: " + _wampVersion
-					);
-
-					while (true)
-						await Task.Delay(12345, this._cts.Token);
-				}
-				catch (OperationCanceledException) { }
-				catch (Exception ex)
-				{
-					Helper.WriteLog("Error occured while starting VIEApps WAMP Router", ex);
-				}
-			}
-		}
-
-		void CloseRouter()
-		{
-			if (this._wampHostedRealm != null)
-			{
-#if DEBUG || SESSIONLOGS
-				this._wampHostedRealm.SessionCreated -= this.OnSessionCreated;
-				this._wampHostedRealm.SessionClosed -= this.OnSessionClosed;
-#else
-				if (!Program.AsService)
-				{
-					this._wampHostedRealm.SessionCreated -= this.OnSessionCreated;
-					this._wampHostedRealm.SessionClosed -= this.OnSessionClosed;
-				}
-#endif
-				this._wampHostedRealm = null;
-			}
-
-			this._wampHost?.Dispose();
-			this._cts?.Cancel();
-			this._cts?.Dispose();
-		}
-
-		void OnSessionCreated(object sender, WampSessionCreatedEventArgs args)
-		{
-			this._counters++;
-			Helper.WriteLog(
-				"A session is opened..." + "\r\n" + 
-				"- Session ID: " + args.SessionId.ToString() + "\r\n" + 
-				"- Total of connections: " + this._counters.ToString("###,##0")
-			);
-		}
-
-		void OnSessionClosed(object sender, WampSessionCloseEventArgs args)
-		{
-			this._counters--;
-			if (this._counters < 0)
-				this._counters = 0;
-			Helper.WriteLog(
-				"A session is closed..." + "\r\n" + 
-				"- Session ID: " + args.SessionId.ToString() + "\r\n" + 
-				"- Reason: " + args.Reason + "\r\n" + 
-				"- Type: " + args.CloseType.ToString() + "\r\n" +
-				"- Total of connections: " + this._counters.ToString("###,##0")
-			);
-		}
-		#endregion
 
 	}
 }
