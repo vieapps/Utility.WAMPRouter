@@ -46,6 +46,8 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			// default settings
 			if (string.IsNullOrWhiteSpace(this._wampAddress))
 				this._wampAddress = "ws://127.0.0.1:26429/";
+			else if (!this._wampAddress.EndsWith("/"))
+				this._wampAddress += "/";
 
 			if (string.IsNullOrWhiteSpace(this._wampRealm))
 				this._wampRealm = "VIEAppsRealm";

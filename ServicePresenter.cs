@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Windows.Forms;
 using System.Diagnostics;
 
@@ -13,15 +14,15 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			this.InitializeComponent();
 		}
 
-		private void ServicePresenter_Load(object sender, EventArgs e)
+		void ServicePresenter_Load(object sender, EventArgs e)
 		{
 			// prepare arguments
 			var args = Environment.GetCommandLineArgs();
 			if (args != null && args.Length > 1)
 			{
-				var tmp = args;
-				args = new string[args.Length - 1];
-				tmp.CopyTo(args, 1);
+				var tmp = args.ToList();
+				tmp.RemoveAt(0);
+				args = tmp.ToArray();
 			}
 			else
 				args = new string[] { };
@@ -48,7 +49,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			}
 		}
 
-		private void ServicePresenter_FormClosed(object sender, FormClosedEventArgs e)
+		void ServicePresenter_FormClosed(object sender, FormClosedEventArgs e)
 		{
 			if (this._component != null)
 				this._component.Stop();
