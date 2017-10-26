@@ -1,6 +1,6 @@
 namespace net.vieapps.Services.Utility.WAMPRouter
 {
-	partial class ProjectInstaller
+	partial class ServiceInstaller
 	{
 		/// <summary>
 		/// Required designer variable.

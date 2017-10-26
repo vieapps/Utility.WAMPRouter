@@ -7,9 +7,9 @@ using System.ServiceProcess;
 namespace net.vieapps.Services.Utility.WAMPRouter
 {
 	[RunInstaller(true)]
-	public partial class ProjectInstaller : Installer
+	public partial class ServiceInstaller : Installer
 	{
-		public ProjectInstaller()
+		public ServiceInstaller()
 		{
 			this.InitializeComponent();
 
@@ -20,7 +20,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 				Password = null
 			});
 
-			this.Installers.Add(new ServiceInstaller()
+			this.Installers.Add(new System.ServiceProcess.ServiceInstaller()
 			{
 				StartType = ServiceStartMode.Automatic,
 				ServiceName = "VIEApps-WAMP-Router",
