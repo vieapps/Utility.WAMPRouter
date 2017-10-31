@@ -28,19 +28,17 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 				Description = "Router for serving messages of RPC and Pub/Sub via web application messaging protocol (WAMP)"
 			});
 
-			this.AfterInstall += new InstallEventHandler(this.StartServiceAfterInstall);
-		}
-
-		void StartServiceAfterInstall(object sender, InstallEventArgs e)
-		{
-			try
+			this.AfterInstall += (sender, args) =>
 			{
-				using (var controller = new ServiceController("VIEApps-WAMP-Router"))
+				try
 				{
-					controller.Start();
+					using (var controller = new ServiceController("VIEApps-WAMP-Router"))
+					{
+						controller.Start();
+					}
 				}
-			}
-			catch { }
+				catch { }
+			};
 		}
 	}
 }
