@@ -19,7 +19,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 		IWampHostedRealm _wampHostedRealm = null;
 
 		string _wampAddress = null, _wampRealm = null;
-		string _componentVersion = "1.2.6.44-b";
+		string _componentVersion = "1.2.6.44b";
 		int _connectionCounters = 0;
 
 		internal void Start(string[] args)
