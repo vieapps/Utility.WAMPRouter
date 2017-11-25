@@ -33,7 +33,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 
 		internal static void WriteLog(string log, Exception ex = null)
 		{
-			string msg = log + (ex != null ? "\r\n\r\n" + "Message: " + ex.Message + " [" + ex.GetType().ToString() + "]\r\n\r\n" + "Details: " + ex.StackTrace : "");
+			string msg = log + (ex != null ? "\r\n\r\n" + $"{ex.Message} [{ex.GetType()}]\r\n\r\n" + $"Details: {ex.StackTrace}" : "");
 			if (Program.AsService)
 				Helper.EventLog.WriteEntry(msg, ex != null ? EventLogEntryType.Error : EventLogEntryType.Information);
 			else
