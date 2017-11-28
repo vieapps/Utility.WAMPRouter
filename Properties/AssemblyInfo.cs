@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 [assembly: ComVisible(false)]
 
-[assembly: AssemblyTitle("VIEApps NGX WAMP Router")]
+[assembly: AssemblyTitle("VIEApps WAMP Router")]
 [assembly: AssemblyCompany("VIEApps.net")]
 [assembly: AssemblyProduct("VIEApps NGX")]
 [assembly: AssemblyCopyright("© 2017 VIEApps.net")]
