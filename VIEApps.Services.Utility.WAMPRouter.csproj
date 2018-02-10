@@ -108,7 +108,7 @@
       <Version>3.1.1</Version>
     </PackageReference>
     <PackageReference Include="WampSharp.Default.Router">
-      <Version>1.2.7.48-beta</Version>
+      <Version>1.2.7.49-beta</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
