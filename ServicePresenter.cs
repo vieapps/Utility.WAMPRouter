@@ -61,7 +61,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 		{
 			if (base.InvokeRequired)
 			{
-				UpdateLogsDelegator method = new UpdateLogsDelegator(this.UpdateLogs);
+				var method = new UpdateLogsDelegator(this.UpdateLogs);
 				base.Invoke(method, new object[] { logs });
 			}
 			else

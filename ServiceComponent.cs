@@ -18,7 +18,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 		IWampHost _wampHost = null;
 		IWampHostedRealm _wampHostedRealm = null;
 
-		string _wampAddress = null, _wampRealm = null, _componentVersion = "1.2.7.49b.netstandard-2+rev:2018.01.31";
+		string _wampAddress = null, _wampRealm = null, _componentVersion = "18.3.2.netstandard-2+rev:2018.04.01";
 		int _connectionCounters = 0;
 
 		internal void Start(string[] args)
@@ -44,7 +44,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 
 			// default settings
 			if (string.IsNullOrWhiteSpace(this._wampAddress))
-				this._wampAddress = "ws://127.0.0.1:16429/";
+				this._wampAddress = "ws://0.0.0.0:16429/";
 			else if (!this._wampAddress.EndsWith("/"))
 				this._wampAddress += "/";
 
@@ -70,9 +70,9 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 
 				this._wampHost.Open();
 				Helper.WriteLog(
-					$"VIEApps WAMP Router is ready for serving [PID: {Process.GetCurrentProcess().Id}]" + "\r\n" +
-					$"- URI: {this._wampAddress}{this._wampRealm}\r\n" + 
-					$"- WampSharp: v{this._componentVersion}"
+					$"VIEApps WAMP Router is ready for serving [PID: {Process.GetCurrentProcess().Id}]" +
+					$"\r\n- URI: {this._wampAddress}{this._wampRealm}" + 
+					$"\r\n- WampSharp: v{this._componentVersion}"
 				);
 			}
 			catch (Exception ex)
@@ -85,9 +85,9 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 		{
 			this._connectionCounters++;
 			Helper.WriteLog(
-				"A session is opened..." + "\r\n" + 
-				$"- Session ID: {args.SessionId}\r\n" + 
-				$"- Total of connections: {this._connectionCounters.ToString("###,##0")}"
+				"A session is opened..." + 
+				$"\r\n- Session ID: {args.SessionId}" + 
+				$"\r\n- Total of connections: {this._connectionCounters.ToString("###,##0")}"
 			);
 		}
 
@@ -97,11 +97,11 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			if (this._connectionCounters < 0)
 				this._connectionCounters = 0;
 			Helper.WriteLog(
-				"A session is closed..." + "\r\n" +
-				$"- Session ID: {args.SessionId}\r\n" +
-				$"- Reason: {args.Reason}\r\n" + 
-				$"- Type: {args.CloseType}\r\n" +
-				$"- Total of connections: {this._connectionCounters.ToString("###,##0")}"
+				"A session is closed..." +
+				$"\r\n- Session ID: {args.SessionId}" +
+				$"\r\n- Reason: {args.Reason}" + 
+				$"\r\n- Type: {args.CloseType}" +
+				$"\r\n- Total of connections: {this._connectionCounters.ToString("###,##0")}"
 			);
 		}
 
@@ -126,7 +126,6 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 				}
 
 				this._wampHost?.Dispose();
-
 				Helper.WriteLog("VIEApps WAMP Router is closed....");
 			}
 			catch (Exception ex)
