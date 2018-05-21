@@ -1,25 +1,13 @@
-using System;
-using System.ServiceProcess;
-
 namespace net.vieapps.Services.Utility.WAMPRouter
 {
-	public partial class ServiceRunner : ServiceBase
+	public partial class ServiceRunner : System.ServiceProcess.ServiceBase
 	{
-		public ServiceRunner()
-		{
-			this.InitializeComponent();
-		}
+		ServiceComponent Component { get; set; } = new ServiceComponent();
 
-		ServiceComponent _component = new ServiceComponent();
+		public ServiceRunner() => this.InitializeComponent();
 
-		protected override void OnStart(string[] args)
-		{
-			this._component.Start(args);
-		}
+		protected override void OnStart(string[] args) => this.Component.Start(args);
 
-		protected override void OnStop()
-		{
-			this._component.Stop();
-		}
+		protected override void OnStop() => this.Component.Stop();
 	}
 }

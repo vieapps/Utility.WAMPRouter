@@ -6,8 +6,8 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 {
 	static class Program
 	{
-		internal static bool AsService = !Environment.UserInteractive;
-		internal static ServicePresenter Form = null;
+		internal static bool AsService { get; set; } = !Environment.UserInteractive;
+		internal static ServicePresenter Form { get; set; } = null;
 
 		static void Main(string[] args)
 		{

@@ -7,12 +7,9 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 {
 	public partial class ServicePresenter : Form
 	{
-		ServiceComponent _component = null;
+		ServiceComponent Component { get; set; } = null;
 
-		public ServicePresenter()
-		{
-			this.InitializeComponent();
-		}
+		public ServicePresenter() => this.InitializeComponent();
 
 		void ServicePresenter_Load(object sender, EventArgs e)
 		{
@@ -40,8 +37,8 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			// start
 			try
 			{
-				this._component = new ServiceComponent();
-				this._component.Start(args);
+				this.Component = new ServiceComponent();
+				this.Component.Start(args);
 			}
 			catch (Exception ex)
 			{
@@ -51,8 +48,8 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 
 		void ServicePresenter_FormClosed(object sender, FormClosedEventArgs e)
 		{
-			if (this._component != null)
-				this._component.Stop();
+			if (this.Component != null)
+				this.Component.Stop();
 		}
 
 		public delegate void UpdateLogsDelegator(string logs);
