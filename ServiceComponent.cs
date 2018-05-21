@@ -2,9 +2,6 @@
 using System;
 using System.Configuration;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
-
 using WampSharp.V2;
 using WampSharp.V2.Realm;
 #endregion
@@ -62,8 +59,8 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 				this.WampHostedRealm = this.WampHost.RealmContainer.GetRealmByName(this.WampRealm);
 
 #if DEBUG || SESSIONLOGS
-				this._wampHostedRealm.SessionCreated += this.OnSessionCreated;
-				this._wampHostedRealm.SessionClosed += this.OnSessionClosed;
+				this.WampHostedRealm.SessionCreated += this.OnSessionCreated;
+				this.WampHostedRealm.SessionClosed += this.OnSessionClosed;
 #else
 				if (!Program.AsService)
 				{
@@ -117,8 +114,8 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 				if (this.WampHostedRealm != null)
 				{
 #if DEBUG || SESSIONLOGS
-				this._wampHostedRealm.SessionCreated -= this.OnSessionCreated;
-				this._wampHostedRealm.SessionClosed -= this.OnSessionClosed;
+				this.WampHostedRealm.SessionCreated -= this.OnSessionCreated;
+				this.WampHostedRealm.SessionClosed -= this.OnSessionClosed;
 #else
 					if (!Program.AsService)
 					{
