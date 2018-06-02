@@ -10,9 +10,9 @@ namespace net.vieapps.Services.Utility.WAMPRouter
     {
         static void Main(string[] args)
         {
-        	var isUserInteractive = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-				? Environment.UserInteractive
-				: Environment.UserInteractive && args?.FirstOrDefault(a => a.Equals("/daemon:true")) == null;
+        	var isUserInteractive = Environment.UserInteractive
+        		? args?.FirstOrDefault(a => a.StartsWith("/daemon")) == null
+        		: false;
 
 			var loggerFactory = new ServiceCollection()
 				.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Information))
