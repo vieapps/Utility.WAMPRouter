@@ -4,6 +4,7 @@ using System.Net;
 using System.Reflection;
 using System.Configuration;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using WampSharp.V2;
@@ -130,39 +131,49 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 							var command = (json.Value<string>("command") ?? json.Value<string>("Command")) ?? "Unknown";
 
 							if (command.ToLower().Equals("info"))
-								socket.Send(this.RouterInfo.ToString(Formatting.None));
-
-							else if (command.ToLower().Equals("sessions"))
-								socket.Send(this.SessionsInfo.ToString(Formatting.None));
+								Task.Run(() => socket.Send(this.RouterInfo.ToString(Formatting.None))).ConfigureAwait(false);
 
 							else if (command.ToLower().Equals("connections"))
-								socket.Send(new JObject
+								Task.Run(() => socket.Send(new JObject
 								{
 									{ "Connections", this.Sessions.Count }
-								}.ToString(Formatting.None));
+								}.ToString(Formatting.None))).ConfigureAwait(false);
+
+							else if (command.ToLower().Equals("sessions"))
+								Task.Run(() => socket.Send(this.SessionsInfo.ToString(Formatting.None))).ConfigureAwait(false);
+
+							else if (command.ToLower().Equals("session"))
+							{
+								if (this.Sessions.TryGetValue(json.Value<long>("SessionID"), out SessionInfo sessionInfo))
+									Task.Run(() => socket.Send(sessionInfo.ToJson().ToString(Formatting.None))).ConfigureAwait(false);
+								else
+									Task.Run(() => socket.Send(new JObject
+									{
+										{ "Error", $"Not Found" }
+									}.ToString(Formatting.None))).ConfigureAwait(false);
+							}
 
 							else if (command.ToLower().Equals("update"))
 							{
 								if (this.Sessions.TryGetValue(json.Value<long>("SessionID"), out SessionInfo sessionInfo))
 								{
 									sessionInfo.Name = json.Value<string>("Name");
-									sessionInfo.URI = json.Value<string>("URI");
 									sessionInfo.Description = json.Value<string>("Description");
 								}
 							}
 
 							else
-								socket.Send(new JObject
+								Task.Run(() => socket.Send(new JObject
 								{
 									{ "Error", $"Unknown command [{message}]" }
-								}.ToString(Formatting.None));
+								}.ToString(Formatting.None))).ConfigureAwait(false);
 						}
 						catch (Exception ex)
 						{
-							socket.Send(new JObject
+							Task.Run(() => socket.Send(new JObject
 							{
 								{ "Error", $"Bad command [{message}] => {ex.Message}" }
-							}.ToString(Formatting.None));
+							}.ToString(Formatting.None))).ConfigureAwait(false);
 						}
 					};
 				});
@@ -267,11 +278,10 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 		public long SessionID { get; internal set; }
 		public Guid ConnectionID { get; internal set; }
 		public IPEndPoint EndPoint { get; internal set; }
+		public string Name { get; internal set; }
+		public string Description { get; internal set; }
 		public string CloseType { get; internal set; }
 		public string CloseReason { get; internal set; }
-		public string Name { get; internal set; }
-		public string URI { get; internal set; }
-		public string Description { get; internal set; }
 		internal JObject ToJson()
 			=> new JObject
 			{
@@ -279,7 +289,6 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 				{ "ConnectionID", $"{this.ConnectionID}" },
 				{ "EndPoint", $"{this.EndPoint}" },
 				{ "Name", this.Name },
-				{ "URI", this.URI },
 				{ "Description", this.Description }
 			};
 	}
