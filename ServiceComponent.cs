@@ -10,7 +10,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 {
 	public class ServiceComponent
 	{
-		readonly string ComponentVersion = "18.5.1.netstandard-2+rev:2018.05.21";
+		readonly string ComponentVersion = "18.6.1.netstandard-2-rxnet.4-msgpck-0.9-json-11-fleck-1.0.3+rev:2018.06.02";
 
 		IWampHost WampHost { get; set; } = null;
 
