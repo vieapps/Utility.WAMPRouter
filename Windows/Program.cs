@@ -2,7 +2,6 @@ using System;
 using System.ServiceProcess;
 using System.Windows.Forms;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 
 namespace net.vieapps.Services.Utility.WAMPRouter
 {
@@ -46,14 +45,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			Program.ServiceComponent = new ServiceComponent
 			{
 				OnError = ex => Program.WriteLog(ex.Message, ex),
-				OnStarted = () => Program.WriteLog(
-					$"VIEApps NGX WAMP Router is ready for serving" + "\r\n" +
-					$"- Listening URI: {Program.ServiceComponent.Address}{Program.ServiceComponent.Realm}" + "\r\n" +
-					$"- Powered Component: {Program.ServiceComponent.ComponentInfo}" + "\r\n" +
-					$"- Hosted Realm Session ID: {Program.ServiceComponent.HostedRealm.SessionId}" + "\r\n" +
-					$"- Platform: {RuntimeInformation.FrameworkDescription} @ {(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Windows" : RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "Linux" : "Other OS")} {RuntimeInformation.OSArchitecture} ({RuntimeInformation.OSDescription.Trim()})" + "\r\n" +
-					$"- Process ID: {Process.GetCurrentProcess().Id}"
-				),
+				OnStarted = () => Program.WriteLog(Program.ServiceComponent.RouterInfoString.Replace("\t", "")),
 				OnStopped = () => Program.WriteLog("VIEApps NGX WAMP Router is stopped"),
 				OnSessionCreated = info =>
 				{

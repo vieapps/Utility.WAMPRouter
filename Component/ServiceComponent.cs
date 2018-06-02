@@ -1,18 +1,22 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Configuration;
+using System.Diagnostics;
 using System.Collections.Concurrent;
+using System.Runtime.InteropServices;
 using WampSharp.V2;
 using WampSharp.V2.Realm;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Fleck;
 
 namespace net.vieapps.Services.Utility.WAMPRouter
 {
 	public class ServiceComponent
 	{
-
-		#region Properties
-		public string ComponentInfo { get; } = "WampSharp v18.6.1.netstandard-2-rxnet-4.0-msgpack-0.9-json-11.0-fleck-1.0.3+rev:2018.06.02";
+		public const string Powered = "WampSharp v18.6.1.netstandard-2-rxnet-4.0-msgpack-0.9-json-11.0-fleck-1.0.3+rev:2018.06.02";
 
 		public IWampHost Host { get; private set; } = null;
 
@@ -22,20 +26,19 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 
 		public string Realm { get; set; } = null;
 
-		public ConcurrentDictionary<long, SessionInfo> Connections { get; } = new ConcurrentDictionary<long, SessionInfo>();
-		#endregion
+		WebSocketServer StatisticsServer { get; set; } = null;
 
-		#region Event handlers
-		public Action<Exception> OnError { get; set; } = (ex) => { };
+		public ConcurrentDictionary<long, SessionInfo> Sessions { get; } = new ConcurrentDictionary<long, SessionInfo>();
 
-		public Action OnStarted { get; set; } = () => { };
+		public Action<Exception> OnError { get; set; } = null;
 
-		public Action OnStopped { get; set; } = () => { };
+		public Action OnStarted { get; set; } = null;
 
-		public Action<SessionInfo> OnSessionCreated { get; set; } = info => { };
+		public Action OnStopped { get; set; } = null;
 
-		public Action<SessionInfo> OnSessionClosed { get; set; } = info => { };
-		#endregion
+		public Action<SessionInfo> OnSessionCreated { get; set; } = null;
+
+		public Action<SessionInfo> OnSessionClosed { get; set; } = null;
 
 		public void Start(string[] args)
 		{
@@ -66,7 +69,19 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 					this.Realm = "VIEAppsRealm";
 			}
 
-			// open the hosting of the WAMP router
+			// statistics
+			if ("true".Equals(ConfigurationManager.AppSettings["StatisticsWebSocketServer:Enable"] ?? "true"))
+			{
+				var port = 56429;
+				try
+				{
+					port = Convert.ToInt32(ConfigurationManager.AppSettings["StatisticsWebSocketServer:Port"] ?? "56429");
+				}
+				catch { }
+				this.StatisticsServer = new WebSocketServer($"ws://0.0.0.0:{port}/");
+			}
+
+			// start
 			try
 			{
 				this.Host = new DefaultWampHost(this.Address);
@@ -90,18 +105,16 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 					{
 						SessionID = arguments.SessionId,
 						ConnectionID = id != null ? (Guid)id : Guid.NewGuid(),
-						EndPoint = new IPEndPoint(IPAddress.Parse(uri != null ? uri.Host : "0.0.0.0"), uri != null ? uri.Port : 16429),
-						State = "Open"
+						EndPoint = new IPEndPoint(IPAddress.Parse(uri != null ? uri.Host : "0.0.0.0"), uri != null ? uri.Port : 16429)
 					};
-					this.Connections.TryAdd(arguments.SessionId, info);
+					this.Sessions.TryAdd(arguments.SessionId, info);
 					this.OnSessionCreated?.Invoke(info);
 				};
 
 				this.HostedRealm.SessionClosed += (sender, arguments) =>
 				{
-					if (this.Connections.TryRemove(arguments.SessionId, out SessionInfo info))
+					if (this.Sessions.TryRemove(arguments.SessionId, out SessionInfo info))
 					{
-						info.State = "Close";
 						info.CloseType = arguments.CloseType.ToString();
 						info.CloseReason = arguments.Reason;
 					}
@@ -109,6 +122,62 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 				};
 
 				this.Host.Open();
+
+				this.StatisticsServer?.Start(socket =>
+				{
+					socket.OnMessage = message =>
+					{
+						try
+						{
+							var json = JObject.Parse(message);
+							var command = (json.Value<string>("command") ?? json.Value<string>("Command")) ?? "Unknown";
+
+							if (command.ToLower().Equals("info"))
+								socket.Send(this.RouterInfo.ToString(Formatting.None));
+
+							else if (command.ToLower().Equals("sessions"))
+								socket.Send(this.SessionsInfo.ToString(Formatting.None));
+
+							else if (command.ToLower().Equals("connections"))
+								socket.Send(new JObject
+								{
+									{ "Connections", this.Sessions.Count }
+								}.ToString(Formatting.None));
+
+							else if (command.ToLower().Equals("update"))
+								try
+								{
+									if (this.Sessions.TryGetValue(json.Value<long>("Session-ID"), out SessionInfo sessionInfo))
+									{
+										sessionInfo.Name = json.Value<string>("Name");
+										sessionInfo.URI = json.Value<string>("URI");
+										sessionInfo.Description = json.Value<string>("Description");
+									}
+								}
+								catch (Exception ex)
+								{
+									socket.Send(new JObject
+									{
+										{ "Error", $"Bad command [{message}] => {ex.Message}" }
+									}.ToString(Formatting.None));
+								}
+
+							else
+								socket.Send(new JObject
+								{
+									{ "Error", $"Unknown command [{message}]" }
+								}.ToString(Formatting.None));
+						}
+						catch (Exception ex)
+						{
+							socket.Send(new JObject
+							{
+								{ "Error", $"Bad command [{message}] => {ex.Message}" }
+							}.ToString(Formatting.None));
+						}
+					};
+				});
+
 				this.OnStarted?.Invoke();
 			}
 			catch (Exception ex)
@@ -123,11 +192,71 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			{
 				this.HostedRealm = null;
 				this.Host?.Dispose();
+				this.StatisticsServer?.Dispose();
 				this.OnStopped?.Invoke();
 			}
 			catch (Exception ex)
 			{
 				this.OnError?.Invoke(ex);
+			}
+		}
+
+		public JObject RouterInfo
+			=> new JObject
+			{
+				{ "URI", $"{this.Address}{this.Realm}" },
+				{ "HostedRealmSessionID", $"{this.HostedRealm.SessionId}" },
+				{ "Platform", $"{RuntimeInformation.FrameworkDescription} @ {(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Windows" : RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "Linux" : "Other OS")} {RuntimeInformation.OSArchitecture} ({RuntimeInformation.OSDescription.Trim()})" },
+				{ "Powered", ServiceComponent.Powered },
+				{ "ProcessID", $"{Process.GetCurrentProcess().Id}" },
+				{ "StatisticsServer", $"{this.StatisticsServer != null}".ToLower() },
+				{ "StatisticsServerPort", this.StatisticsServer != null ? this.StatisticsServer.Port : 56429 }
+			};
+
+		public string RouterInfoString
+		{
+			get
+			{
+				var json = this.RouterInfo;
+				return
+					$"- Listening URI: {json.Value<string>("URI")}" + "\r\n\t" +
+					$"- Hosted Realm Session ID: {json.Value<string>("HostedRealmSessionID")}" + "\r\n\t" +
+					$"- Platform: {json.Value<string>("Platform")}" + "\r\n\t" +
+					$"- Powered: {json.Value<string>("Powered")}" + "\r\n\t" +
+					$"- Process ID: {json.Value<string>("ProcessID")}" + "\r\n\t" +
+					$"- Statistics Server: {json.Value<string>("StatisticsServer")}" + "\r\n\t" +
+					$"- Statistics Server Port: {json.Value<long>("StatisticsServerPort")}";
+			}
+		}
+
+		public JObject SessionsInfo
+		{
+			get
+			{
+				var sessions = new JArray();
+				this.Sessions.Values.ToList().ForEach(info => sessions.Add(info.ToJson()));
+				return new JObject
+				{
+					{ "Total", this.Sessions.Count },
+					{ "Sessions", sessions }
+				};
+			}
+		}
+
+		public string SessionsInfoString
+		{
+			get
+			{
+				var json = this.SessionsInfo;
+				var sessions = json["Sessions"] as JArray;
+				var info = $"Total of sessions: {json.Value<string>("Total")}";
+				if (sessions.Count > 0)
+				{
+					info += "\r\n" + "Details:";
+					foreach (JObject session in sessions)
+						info += "\r\n\t" + $"Session ID: {session.Value<long>("SessionID")} - Connection Info: {session.Value<string>("ConnectionID")} - {session.Value<string>("EndPoint")})";
+				}
+				return info;
 			}
 		}
 	}
@@ -137,10 +266,21 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 		public long SessionID { get; internal set; }
 		public Guid ConnectionID { get; internal set; }
 		public IPEndPoint EndPoint { get; internal set; }
-		public string State { get; internal set; }
 		public string CloseType { get; internal set; }
 		public string CloseReason { get; internal set; }
 		public string Name { get; internal set; }
 		public string URI { get; internal set; }
+		public string Description { get; internal set; }
+		internal JObject ToJson()
+			=> new JObject
+			{
+				{ "SessionID", this.SessionID },
+				{ "ConnectionID", $"{this.ConnectionID}" },
+				{ "EndPoint", $"{this.EndPoint}" },
+				{ "Status", "Established" },
+				{ "Name", this.Name },
+				{ "URI", this.URI },
+				{ "Description", this.Description }
+			};
 	}
 }

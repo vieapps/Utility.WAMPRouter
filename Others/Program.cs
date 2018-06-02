@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Linq;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -26,15 +23,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 
 			void showInfo()
 			{
-				logger.LogInformation(
-					$"VIEApps NGX WAMP Router Info" + "\r\n\t" + 
-					$"- Listening URI: {serviceComponent.Address}{serviceComponent.Realm}" + "\r\n\t" +
-					$"- Powered Component: {serviceComponent.ComponentInfo}" + "\r\n\t" +
-					$"- Hosted Realm Session ID: {serviceComponent.HostedRealm.SessionId}" + "\r\n\t" +
-					$"- Platform: {RuntimeInformation.FrameworkDescription} @ {(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Windows" : RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "Linux" : "Other OS")} {RuntimeInformation.OSArchitecture} ({RuntimeInformation.OSDescription.Trim()})" + "\r\n\t" +
-					$"- Process ID: {Process.GetCurrentProcess().Id}" + "\r\n\t" +
-					$"- Connections: {serviceComponent.Connections.Count:###,##0}"
-				);
+				logger.LogInformation("VIEApps NGX WAMP Router Info" + "\r\n\t" + serviceComponent.RouterInfoString);
 			}
 
 			void showCommands()
@@ -42,7 +31,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 				logger.LogInformation(
 					$"VIEApps NGX WAMP Router commands" + "\r\n\t" +
 					$"- info: show the related information of the router" + "\r\n\t" +
-					$"- connections: show the related information of all connections" + "\r\n\t" +
+					$"- sessions: show the related information of all sessions" + "\r\n\t" +
 					$"- exit: shutdown and terminate the router"
 				);
 			}
@@ -67,18 +56,13 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			{
 				if (command.ToLower().Equals("info"))
 					showInfo();
-				else if (command.ToLower().Equals("connections"))
-				{
-					var connections = $"Total of connections: {serviceComponent.Connections.Count:#,##0}" + "\r\n" + "Details:";
-					serviceComponent.Connections.Values.ToList().ForEach(info => connections += "\r\n\t" + $"Session ID: {info.SessionID} - Connection Info: {info.ConnectionID} - {info.EndPoint})");
-					logger.LogInformation(connections);
-				}
+				else if (command.ToLower().Equals("sessions"))
+					logger.LogInformation(serviceComponent.SessionsInfoString);
 				else
 					showCommands();
 				command = Console.ReadLine();
 			}
-
 			serviceComponent.Stop();
 		}
-    }
+	}
 }
