@@ -249,6 +249,11 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 				return info;
 			}
 		}
+
+		~ServiceComponent()
+		{
+			this.Stop();
+		}
 	}
 
 	public class SessionInfo
