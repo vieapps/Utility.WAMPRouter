@@ -199,6 +199,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 				{ "Platform", $"{RuntimeInformation.FrameworkDescription} @ {(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Windows" : RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "Linux" : "Other OS")} {RuntimeInformation.OSArchitecture} ({RuntimeInformation.OSDescription.Trim()})" },
 				{ "Powered", ServiceComponent.Powered },
 				{ "ProcessID", $"{Process.GetCurrentProcess().Id}" },
+				{ "WorkingMode", Environment.UserInteractive ? "Interactive app" : "Background service" },
 				{ "StatisticsServer", $"{this.StatisticsServer != null}".ToLower() },
 				{ "StatisticsServerPort", this.StatisticsServer != null ? this.StatisticsServer.Port : 56429 }
 			};
@@ -214,6 +215,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 					$"- Platform: {json.Value<string>("Platform")}" + "\r\n\t" +
 					$"- Powered: {json.Value<string>("Powered")}" + "\r\n\t" +
 					$"- Process ID: {json.Value<string>("ProcessID")}" + "\r\n\t" +
+					$"- Working Mode: {json.Value<string>("WorkingMode")}" + "\r\n\t" +
 					$"- Statistics Server: {json.Value<string>("StatisticsServer")}" + "\r\n\t" +
 					$"- Statistics Server Port: {json.Value<long>("StatisticsServerPort")}";
 			}
@@ -252,7 +254,11 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 
 		~ServiceComponent()
 		{
-			this.Stop();
+			try
+			{
+				this.Stop();
+			}
+			catch { }
 		}
 	}
 
