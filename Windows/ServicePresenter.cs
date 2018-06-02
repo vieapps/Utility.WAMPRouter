@@ -7,8 +7,6 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 {
 	public partial class ServicePresenter : Form
 	{
-		ServiceComponent Component { get; set; } = null;
-
 		public ServicePresenter() => this.InitializeComponent();
 
 		void ServicePresenter_Load(object sender, EventArgs e)
@@ -28,29 +26,17 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			this.CommandLine.SelectionStart = this.CommandLine.TextLength;
 
 			// update logs
-			this.UpdateLogs("The VIEApps WAMP Router is now running as a Windows desktop app" + "\r\n");
+			this.UpdateLogs("The VIEApps NGX WAMP Router is now running as a Windows desktop app" + "\r\n");
 			this.UpdateLogs("Syntax: VIEApps.WAMPRouter.exe /address:<ws://ip:port> /realm:<realm-name>" + "\r\n");
 			this.UpdateLogs("To install as a Windows service, use the InstallUtil.exe in the command prompt as \"InstallUtil /i VIEApps.WAMPRouter.exe\" (with Administrator privileges)");
 			this.UpdateLogs("--------------------------------------------------------------------" + "\r\n");
 			this.UpdateLogs("OUTPUT:" + "\r\n");
 
 			// start
-			try
-			{
-				this.Component = new ServiceComponent();
-				this.Component.Start(args);
-			}
-			catch (Exception ex)
-			{
-				this.UpdateLogs("Error occurred while starting: " + ex.Message + "\r\n\r\nStack: " + ex.StackTrace);
-			}
+			Program.Start(args);
 		}
 
-		void ServicePresenter_FormClosed(object sender, FormClosedEventArgs e)
-		{
-			if (this.Component != null)
-				this.Component.Stop();
-		}
+		void ServicePresenter_FormClosed(object sender, FormClosedEventArgs e) => Program.Stop();
 
 		public delegate void UpdateLogsDelegator(string logs);
 
