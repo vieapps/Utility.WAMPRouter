@@ -54,7 +54,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 					$"- Platform: {RuntimeInformation.FrameworkDescription} @ {(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Windows" : RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "Linux" : "Other OS")} {RuntimeInformation.OSArchitecture} ({RuntimeInformation.OSDescription.Trim()})" + "\r\n" +
 					$"- Process ID: {Process.GetCurrentProcess().Id}"
 				),
-				OnStopped = () => Program.WriteLog("VIEApps WAMP Router is stopped"),
+				OnStopped = () => Program.WriteLog("VIEApps NGX WAMP Router is stopped"),
 				OnSessionCreated = info =>
 				{
 					if (Environment.UserInteractive)
