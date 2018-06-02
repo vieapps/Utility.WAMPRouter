@@ -1,18 +1,17 @@
 ﻿using System;
 using System.Linq;
-using System.Runtime.InteropServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace net.vieapps.Services.Utility.WAMPRouter
 {
-    class Program
-    {
-        static void Main(string[] args)
-        {
-        	var isUserInteractive = Environment.UserInteractive
-        		? args?.FirstOrDefault(a => a.StartsWith("/daemon")) == null
-        		: false;
+	class Program
+	{
+		static void Main(string[] args)
+		{
+			var isUserInteractive = Environment.UserInteractive
+				? args?.FirstOrDefault(a => a.StartsWith("/daemon")) == null
+				: false;
 
 			var loggerFactory = new ServiceCollection()
 				.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Information))
