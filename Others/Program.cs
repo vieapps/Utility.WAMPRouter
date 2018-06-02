@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Runtime.InteropServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -8,15 +10,20 @@ namespace net.vieapps.Services.Utility.WAMPRouter
     {
         static void Main(string[] args)
         {
-			Console.OutputEncoding = System.Text.Encoding.UTF8;
+        	var isUserInteractive = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+				? Environment.UserInteractive
+				: Environment.UserInteractive && args?.FirstOrDefault(a => a.Equals("/daemon:true")) == null;
 
 			var loggerFactory = new ServiceCollection()
 				.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Information))
 				.BuildServiceProvider()
 				.GetService<ILoggerFactory>();
 
-			if (Environment.UserInteractive)
+			if (isUserInteractive)
+			{
+				Console.OutputEncoding = System.Text.Encoding.UTF8;
 				loggerFactory.AddConsole(LogLevel.Information);
+			}
 
 			var logger = loggerFactory.CreateLogger<ServiceComponent>();
 			ServiceComponent serviceComponent = null;
@@ -42,8 +49,11 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 				OnStarted = () =>
 				{
 					logger.LogInformation("VIEApps NGX WAMP Router is ready for serving");
-					showInfo();
-					showCommands();
+					if (isUserInteractive)
+					{
+						showInfo();
+						showCommands();
+					}
 				},
 				OnStopped = () => logger.LogInformation("VIEApps NGX WAMP Router is stopped"),
 				OnSessionCreated = info => logger.LogInformation($"A session is opened - Session ID: {info.SessionID} - Connection Info: {info.ConnectionID} - {info.EndPoint})"),
@@ -51,18 +61,23 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			};
 			serviceComponent.Start(args);
 
-			var command = Console.ReadLine();
-			while (command != "exit")
+			if (isUserInteractive)
 			{
-				if (command.ToLower().Equals("info"))
-					showInfo();
-				else if (command.ToLower().Equals("sessions"))
-					logger.LogInformation(serviceComponent.SessionsInfoString);
-				else
-					showCommands();
-				command = Console.ReadLine();
+				var command = Console.ReadLine();
+				while (command != "exit")
+				{
+					if (command.ToLower().Equals("info"))
+						showInfo();
+					else if (command.ToLower().Equals("sessions"))
+						logger.LogInformation(serviceComponent.SessionsInfoString);
+					else
+						showCommands();
+					command = Console.ReadLine();
+				}
+				serviceComponent.Stop();
 			}
-			serviceComponent.Stop();
+			else
+				while (true) { }
 		}
 	}
 }

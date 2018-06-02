@@ -85,7 +85,6 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			try
 			{
 				this.Host = new DefaultWampHost(this.Address);
-
 				this.HostedRealm = this.Host.RealmContainer.GetRealmByName(this.Realm);
 
 				this.HostedRealm.SessionCreated += (sender, arguments) =>
@@ -121,8 +120,6 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 					this.OnSessionClosed?.Invoke(info);
 				};
 
-				this.Host.Open();
-
 				this.StatisticsServer?.Start(socket =>
 				{
 					socket.OnMessage = message =>
@@ -145,22 +142,14 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 								}.ToString(Formatting.None));
 
 							else if (command.ToLower().Equals("update"))
-								try
+							{
+								if (this.Sessions.TryGetValue(json.Value<long>("SessionID"), out SessionInfo sessionInfo))
 								{
-									if (this.Sessions.TryGetValue(json.Value<long>("Session-ID"), out SessionInfo sessionInfo))
-									{
-										sessionInfo.Name = json.Value<string>("Name");
-										sessionInfo.URI = json.Value<string>("URI");
-										sessionInfo.Description = json.Value<string>("Description");
-									}
+									sessionInfo.Name = json.Value<string>("Name");
+									sessionInfo.URI = json.Value<string>("URI");
+									sessionInfo.Description = json.Value<string>("Description");
 								}
-								catch (Exception ex)
-								{
-									socket.Send(new JObject
-									{
-										{ "Error", $"Bad command [{message}] => {ex.Message}" }
-									}.ToString(Formatting.None));
-								}
+							}
 
 							else
 								socket.Send(new JObject
@@ -178,6 +167,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 					};
 				});
 
+				this.Host.Open();
 				this.OnStarted?.Invoke();
 			}
 			catch (Exception ex)
@@ -249,7 +239,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			{
 				var json = this.SessionsInfo;
 				var sessions = json["Sessions"] as JArray;
-				var info = $"Total of sessions: {json.Value<string>("Total")}";
+				var info = $"Total of sessions: {json.Value<long>("Total")}";
 				if (sessions.Count > 0)
 				{
 					info += "\r\n" + "Details:";
@@ -277,7 +267,6 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 				{ "SessionID", this.SessionID },
 				{ "ConnectionID", $"{this.ConnectionID}" },
 				{ "EndPoint", $"{this.EndPoint}" },
-				{ "Status", "Established" },
 				{ "Name", this.Name },
 				{ "URI", this.URI },
 				{ "Description", this.Description }
