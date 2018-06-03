@@ -65,38 +65,43 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 				}
 			}
 
-			// start
-			serviceComponent = isUserInteractive
-				? new ServiceComponent
-				{
-					OnError = ex => logger.LogError(ex, ex.Message),
-					OnStarted = () =>
+			void start()
+			{
+				serviceComponent = isUserInteractive
+					? new ServiceComponent
 					{
-						logger.LogInformation("VIEApps NGX WAMP Router is ready for serving");
-						showInfo();
-						showCommands();
-					},
-					OnStopped = () => logger.LogInformation("VIEApps NGX WAMP Router is stopped"),
-					OnSessionCreated = info => logger.LogInformation($"A session is opened - Session ID: {info.SessionID} - Connection Info: {info.ConnectionID} - {info.EndPoint})"),
-					OnSessionClosed = info => logger.LogInformation($"A session is closed - Type: {info?.CloseType} ({info?.CloseReason ?? "N/A"}) - Session ID: {info?.SessionID} - Connection Info: {info?.ConnectionID} - {info?.EndPoint})")
-				}
-				: new ServiceComponent();
+						OnError = ex => logger.LogError(ex, ex.Message),
+						OnStarted = () =>
+						{
+							logger.LogInformation("VIEApps NGX WAMP Router is ready for serving");
+							showInfo();
+							showCommands();
+						},
+						OnStopped = () => logger.LogInformation("VIEApps NGX WAMP Router is stopped"),
+						OnSessionCreated = info => logger.LogInformation($"A session is opened - Session ID: {info.SessionID} - Connection Info: {info.ConnectionID} - {info.EndPoint})"),
+						OnSessionClosed = info => logger.LogInformation($"A session is closed - Type: {info?.CloseType} ({info?.CloseReason ?? "N/A"}) - Session ID: {info?.SessionID} - Connection Info: {info?.ConnectionID} - {info?.EndPoint})")
+					}
+					: new ServiceComponent();
+				serviceComponent.Start(args);
+			}
 
-			serviceComponent.Start(args);
-
-			// setup hooks
-			AppDomain.CurrentDomain.ProcessExit += (sender, arguments) =>
+			void stop()
 			{
 				serviceComponent.OnError = null;
 				serviceComponent.Stop();
-			};
+			}
+
+			// setup hooks
+			AppDomain.CurrentDomain.ProcessExit += (sender, arguments) => stop();
 
 			Console.CancelKeyPress += (sender, arguments) =>
 			{
-				serviceComponent.OnError = null;
-				serviceComponent.Stop();
+				stop();
 				Environment.Exit(0);
 			};
+
+			// start
+			start();
 
 			// processing commands util got an exit signal
 			if (isUserInteractive)
@@ -108,8 +113,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 					Task.Delay(4321).GetAwaiter().GetResult();
 
 			// stop
-			serviceComponent.OnError = null;
-			serviceComponent.Stop();
+			stop();
 		}
 	}
 }
