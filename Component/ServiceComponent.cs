@@ -27,9 +27,9 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 
 		public string Realm { get; set; } = null;
 
-		WebSocketServer StatisticsServer { get; set; } = null;
-
 		public ConcurrentDictionary<long, SessionInfo> Sessions { get; } = new ConcurrentDictionary<long, SessionInfo>();
+
+		public bool IsUserInteractive { get; private set; } = false;
 
 		public Action<Exception> OnError { get; set; } = null;
 
@@ -41,36 +41,36 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 
 		public Action<SessionInfo> OnSessionClosed { get; set; } = null;
 
+		WebSocketServer StatisticsServer { get; set; } = null;
+
 		public void Start(string[] args)
 		{
 			// prepare
+			this.IsUserInteractive = Environment.UserInteractive && args?.FirstOrDefault(a => a.StartsWith("/daemon")) == null;
+
 			if (string.IsNullOrWhiteSpace(this.Address) || string.IsNullOrWhiteSpace(this.Realm))
 			{
-				if (args != null && args.Length > 0)
-					for (var index = 0; index < args.Length; index++)
-					{
-						if (args[index].StartsWith("/address:"))
-							this.Address = args[index].Substring(args[index].IndexOf(":") + 1).Trim();
-						else if (args[index].StartsWith("/realm:"))
-							this.Realm = args[index].Substring(args[index].IndexOf(":") + 1).Trim();
-					}
-				else
-				{
+				this.Address = args?.FirstOrDefault(a => a.StartsWith("/address:"));
+				if (string.IsNullOrWhiteSpace(this.Address))
 					this.Address = ConfigurationManager.AppSettings["Address"];
-					this.Realm = ConfigurationManager.AppSettings["Realm"];
-				}
+				else
+					this.Address = this.Address.Substring(this.Address.IndexOf(":") + 1).Trim();
 
-				// default settings
 				if (string.IsNullOrWhiteSpace(this.Address))
 					this.Address = "ws://0.0.0.0:16429/";
 				else if (!this.Address.EndsWith("/"))
 					this.Address += "/";
 
+				this.Realm = args?.FirstOrDefault(a => a.StartsWith("/realm:"));
+				if (string.IsNullOrWhiteSpace(this.Realm))
+					this.Realm = ConfigurationManager.AppSettings["Realm"];
+				else
+					this.Realm = this.Realm.Substring(this.Realm.IndexOf(":") + 1).Trim();
+
 				if (string.IsNullOrWhiteSpace(this.Realm))
 					this.Realm = "VIEAppsRealm";
 			}
 
-			// statistics
 			if ("true".Equals(ConfigurationManager.AppSettings["StatisticsWebSocketServer:Enable"] ?? "true"))
 			{
 				var port = 56429;
@@ -207,10 +207,10 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			{
 				{ "URI", $"{this.Address}{this.Realm}" },
 				{ "HostedRealmSessionID", $"{this.HostedRealm.SessionId}" },
-				{ "Platform", $"{RuntimeInformation.FrameworkDescription} @ {(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Windows" : RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "Linux" : "Other OS")} {RuntimeInformation.OSArchitecture} ({RuntimeInformation.OSDescription.Trim()})" },
+				{ "Platform", $"{RuntimeInformation.FrameworkDescription} @ {(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Windows" : RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "Linux" : "macOS")} {RuntimeInformation.OSArchitecture} ({(RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "Macintosh; Intel Mac OS X; " : "")}{RuntimeInformation.OSDescription.Trim()})" },
 				{ "Powered", ServiceComponent.Powered },
 				{ "ProcessID", $"{Process.GetCurrentProcess().Id}" },
-				{ "WorkingMode", Environment.UserInteractive ? "Interactive app" : "Background service" },
+				{ "WorkingMode", this.IsUserInteractive ? "Interactive app" : "Background service" },
 				{ "StatisticsServer", $"{this.StatisticsServer != null}".ToLower() },
 				{ "StatisticsServerPort", this.StatisticsServer != null ? this.StatisticsServer.Port : 56429 }
 			};
