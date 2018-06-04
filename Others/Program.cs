@@ -81,7 +81,12 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 						OnSessionCreated = info => logger.LogInformation($"A session is opened - Session ID: {info.SessionID} - Connection Info: {info.ConnectionID} - {info.EndPoint})"),
 						OnSessionClosed = info => logger.LogInformation($"A session is closed - Type: {info?.CloseType} ({info?.CloseReason ?? "N/A"}) - Session ID: {info?.SessionID} - Connection Info: {info?.ConnectionID} - {info?.EndPoint})")
 					}
-					: new ServiceComponent();
+					: new ServiceComponent
+					{
+						OnError = ex => Console.Error.WriteLine(ex.Message + "\r\n" + ex.StackTrace),
+						OnStarted = () => Console.WriteLine("VIEApps NGX WAMP Router is ready for serving" + "\r\n\t" + serviceComponent.RouterInfoString),
+						OnStopped = () => Console.WriteLine("VIEApps NGX WAMP Router is stopped")
+					};
 				serviceComponent.Start(args);
 			}
 
