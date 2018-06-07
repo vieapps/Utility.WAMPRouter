@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Runtime.InteropServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -84,7 +83,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 					: new ServiceComponent
 					{
 						OnError = ex => Console.Error.WriteLine(ex.Message + "\r\n" + ex.StackTrace),
-						OnStarted = () => Console.WriteLine("VIEApps NGX WAMP Router is ready for serving" + "\r\n\t" + serviceComponent.RouterInfoString),
+						OnStarted = () => Console.WriteLine("VIEApps NGX WAMP Router is ready for serving" + "\r\n\t" + serviceComponent.RouterInfoString + "\r\n\t" + $"- Starting time: {DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}"),
 						OnStopped = () => Console.WriteLine("VIEApps NGX WAMP Router is stopped")
 					};
 				serviceComponent.Start(args);
