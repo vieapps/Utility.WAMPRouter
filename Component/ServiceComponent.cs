@@ -121,9 +121,9 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 					this.OnSessionClosed?.Invoke(info);
 				};
 
-				this.StatisticsServer?.Start(socket =>
+				this.StatisticsServer?.Start(websocket =>
 				{
-					socket.OnMessage = message =>
+					websocket.OnMessage = message =>
 					{
 						try
 						{
@@ -131,23 +131,23 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 							var command = (json.Value<string>("command") ?? json.Value<string>("Command")) ?? "Unknown";
 
 							if (command.ToLower().Equals("info"))
-								Task.Run(() => socket.Send(this.RouterInfo.ToString(Formatting.None))).ConfigureAwait(false);
+								Task.Run(() => websocket.Send(this.RouterInfo.ToString(Formatting.None))).ConfigureAwait(false);
 
 							else if (command.ToLower().Equals("connections"))
-								Task.Run(() => socket.Send(new JObject
+								Task.Run(() => websocket.Send(new JObject
 								{
 									{ "Connections", this.Sessions.Count }
 								}.ToString(Formatting.None))).ConfigureAwait(false);
 
 							else if (command.ToLower().Equals("sessions"))
-								Task.Run(() => socket.Send(this.SessionsInfo.ToString(Formatting.None))).ConfigureAwait(false);
+								Task.Run(() => websocket.Send(this.SessionsInfo.ToString(Formatting.None))).ConfigureAwait(false);
 
 							else if (command.ToLower().Equals("session"))
 							{
 								if (this.Sessions.TryGetValue(json.Value<long>("SessionID"), out SessionInfo sessionInfo))
-									Task.Run(() => socket.Send(sessionInfo.ToJson().ToString(Formatting.None))).ConfigureAwait(false);
+									Task.Run(() => websocket.Send(sessionInfo.ToJson().ToString(Formatting.None))).ConfigureAwait(false);
 								else
-									Task.Run(() => socket.Send(new JObject
+									Task.Run(() => websocket.Send(new JObject
 									{
 										{ "Error", $"Not Found" }
 									}.ToString(Formatting.None))).ConfigureAwait(false);
@@ -163,14 +163,14 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 							}
 
 							else
-								Task.Run(() => socket.Send(new JObject
+								Task.Run(() => websocket.Send(new JObject
 								{
 									{ "Error", $"Unknown command [{message}]" }
 								}.ToString(Formatting.None))).ConfigureAwait(false);
 						}
 						catch (Exception ex)
 						{
-							Task.Run(() => socket.Send(new JObject
+							Task.Run(() => websocket.Send(new JObject
 							{
 								{ "Error", $"Bad command [{message}] => {ex.Message}" }
 							}.ToString(Formatting.None))).ConfigureAwait(false);
@@ -202,18 +202,17 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			}
 		}
 
-		public JObject RouterInfo
-			=> new JObject
-			{
-				{ "URI", $"{this.Address}{this.Realm}" },
-				{ "HostedRealmSessionID", $"{this.HostedRealm.SessionId}" },
-				{ "Platform", $"{RuntimeInformation.FrameworkDescription} @ {(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Windows" : RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "Linux" : "macOS")} {RuntimeInformation.OSArchitecture} ({(RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "Macintosh; Intel Mac OS X; " : "")}{RuntimeInformation.OSDescription.Trim()})" },
-				{ "Powered", ServiceComponent.Powered },
-				{ "ProcessID", $"{Process.GetCurrentProcess().Id}" },
-				{ "WorkingMode", this.IsUserInteractive ? "Interactive app" : "Background service" },
-				{ "StatisticsServer", $"{this.StatisticsServer != null}".ToLower() },
-				{ "StatisticsServerPort", this.StatisticsServer != null ? this.StatisticsServer.Port : 56429 }
-			};
+		public JObject RouterInfo => new JObject
+		{
+			{ "URI", $"{this.Address}{this.Realm}" },
+			{ "HostedRealmSessionID", $"{this.HostedRealm.SessionId}" },
+			{ "Platform", $"{RuntimeInformation.FrameworkDescription} @ {(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Windows" : RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "Linux" : "macOS")} {RuntimeInformation.OSArchitecture} ({(RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "Macintosh; Intel Mac OS X; " : "")}{RuntimeInformation.OSDescription.Trim()})" },
+			{ "Powered", ServiceComponent.Powered },
+			{ "ProcessID", $"{Process.GetCurrentProcess().Id}" },
+			{ "WorkingMode", this.IsUserInteractive ? "Interactive app" : "Background service" },
+			{ "StatisticsServer", $"{this.StatisticsServer != null}".ToLower() },
+			{ "StatisticsServerPort", this.StatisticsServer != null ? this.StatisticsServer.Port : 56429 }
+		};
 
 		public string RouterInfoString
 		{
@@ -252,7 +251,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			{
 				var json = this.SessionsInfo;
 				var sessions = json["Sessions"] as JArray;
-				var info = $"Total of sessions: {json.Value<long>("Total")}";
+				var info = $"Total: {json.Value<long>("Total")}";
 				if (sessions.Count > 0)
 				{
 					info += "\r\n" + "Details:";
@@ -276,20 +275,26 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 	public class SessionInfo
 	{
 		public long SessionID { get; internal set; }
+
 		public Guid ConnectionID { get; internal set; }
+
 		public IPEndPoint EndPoint { get; internal set; }
+
 		public string Name { get; internal set; }
+
 		public string Description { get; internal set; }
+
 		public string CloseType { get; internal set; }
+
 		public string CloseReason { get; internal set; }
-		internal JObject ToJson()
-			=> new JObject
-			{
-				{ "SessionID", this.SessionID },
-				{ "ConnectionID", $"{this.ConnectionID}" },
-				{ "EndPoint", $"{this.EndPoint}" },
-				{ "Name", this.Name },
-				{ "Description", this.Description }
-			};
+
+		internal JObject ToJson() => new JObject
+		{
+			{ "SessionID", this.SessionID },
+			{ "ConnectionID", $"{this.ConnectionID}" },
+			{ "EndPoint", $"{this.EndPoint}" },
+			{ "Name", this.Name },
+			{ "Description", this.Description }
+		};
 	}
 }

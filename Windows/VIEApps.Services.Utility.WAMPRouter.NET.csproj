@@ -100,9 +100,9 @@
     <Content Include="app.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Component\VIEApps.Services.Utility.WAMPRouter.Component.csproj">
+    <ProjectReference Include="..\Component\VIEApps.Services.Utility.WAMPRouter.csproj">
       <Project>{9b1e0509-ce99-4754-bf33-4c2779160809}</Project>
-      <Name>VIEApps.Services.Utility.WAMPRouter.Component</Name>
+      <Name>VIEApps.Services.Utility.WAMPRouter</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
