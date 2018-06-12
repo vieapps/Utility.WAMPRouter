@@ -1,12 +1,15 @@
 using System;
 using System.Linq;
 using System.Net;
+using System.IO;
 using System.Reflection;
 using System.Configuration;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using WampSharp.V2;
 using WampSharp.V2.Realm;
 using Newtonsoft.Json;
@@ -17,7 +20,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 {
 	public class ServiceComponent
 	{
-		public const string Powered = "WampSharp v18.6.1.netstandard-2-rxnet-4.0-msgpack-0.9-json-11.0-fleck-1.0.3+rev:2018.06.02";
+		public const string Powered = "WampSharp v18.6.1.netstandard-2-rxnet-4.0-msgpack-0.9-json-11.0-fleck-1.0.3-ssl+rev:2018.06.13";
 
 		public IWampHost Host { get; private set; } = null;
 
@@ -26,6 +29,10 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 		public string Address { get; set; } = null;
 
 		public string Realm { get; set; } = null;
+
+		public X509Certificate2 SslCertificate { get; set; } = null;
+
+		public SslProtocols SslProtocol { get; set; } = SslProtocols.Tls;
 
 		public ConcurrentDictionary<long, SessionInfo> Sessions { get; } = new ConcurrentDictionary<long, SessionInfo>();
 
@@ -69,121 +76,162 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 
 				if (string.IsNullOrWhiteSpace(this.Realm))
 					this.Realm = "VIEAppsRealm";
+
+				var sslCertificateFilePath = ConfigurationManager.AppSettings["SslCertificate:FilePath"];
+				if (!string.IsNullOrWhiteSpace(sslCertificateFilePath) && sslCertificateFilePath.EndsWith(".pfx") && File.Exists(sslCertificateFilePath))
+					try
+					{
+						var sslCertificatePassword = ConfigurationManager.AppSettings["SslCertificate:Password"];
+						this.SslCertificate = sslCertificatePassword != null
+							? new X509Certificate2(sslCertificateFilePath, sslCertificatePassword, X509KeyStorageFlags.UserKeySet)
+							: new X509Certificate2(sslCertificateFilePath);
+
+						this.SslProtocol = Enum.TryParse(ConfigurationManager.AppSettings["SslProtocol"] ?? "Tls", out SslProtocols sslProtocol)
+							? sslProtocol
+							: SslProtocols.Tls;
+					}
+					catch (Exception ex)
+					{
+						this.OnError?.Invoke(ex);
+					}
 			}
 
-			if ("true".Equals(ConfigurationManager.AppSettings["StatisticsWebSocketServer:Enable"] ?? "true"))
+			void startRouter()
 			{
-				var port = 56429;
 				try
 				{
-					port = Convert.ToInt32(ConfigurationManager.AppSettings["StatisticsWebSocketServer:Port"] ?? "56429");
+					this.Host = this.SslCertificate != null
+						? new DefaultWampHost(this.Address.Replace("ws://", "wss://"), null, null, null, this.SslCertificate, () => this.SslProtocol)
+						: new DefaultWampHost(this.Address.Replace("wss://", "ws://"));
+
+					this.HostedRealm = this.Host.RealmContainer.GetRealmByName(this.Realm);
+					this.HostedRealm.SessionCreated += (sender, arguments) =>
+					{
+						var details = arguments.HelloDetails.TransportDetails;
+						var type = details.GetType();
+						var property = type.GetProperty("Peer", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+						var peer = property != null && property.CanRead
+							? property.GetValue(details)
+							: null;
+						var uri = peer != null ? new Uri(peer as string) : null;
+						property = type.GetProperty("Id", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+						var id = property != null && property.CanRead
+							? property.GetValue(details)
+							: null;
+						var info = new SessionInfo
+						{
+							SessionID = arguments.SessionId,
+							ConnectionID = id != null ? (Guid)id : Guid.NewGuid(),
+							EndPoint = new IPEndPoint(IPAddress.Parse(uri != null ? uri.Host : "0.0.0.0"), uri != null ? uri.Port : 16429)
+						};
+						this.Sessions.TryAdd(arguments.SessionId, info);
+						this.OnSessionCreated?.Invoke(info);
+					};
+					this.HostedRealm.SessionClosed += (sender, arguments) =>
+					{
+						if (this.Sessions.TryRemove(arguments.SessionId, out SessionInfo info))
+						{
+							info.CloseType = arguments.CloseType.ToString();
+							info.CloseReason = arguments.Reason;
+						}
+						this.OnSessionClosed?.Invoke(info);
+					};
+
+					this.Host.Open();
 				}
-				catch { }
-				this.StatisticsServer = new WebSocketServer($"ws://0.0.0.0:{port}/");
+				catch (Exception ex)
+				{
+					this.OnError?.Invoke(ex);
+				}
 			}
 
-			// start
-			try
+			void startStatisticServer()
 			{
-				this.Host = new DefaultWampHost(this.Address);
-				this.HostedRealm = this.Host.RealmContainer.GetRealmByName(this.Realm);
-
-				this.HostedRealm.SessionCreated += (sender, arguments) =>
+				try
 				{
-					var details = arguments.HelloDetails.TransportDetails;
-					var type = details.GetType();
-					var property = type.GetProperty("Peer", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
-					var peer = property != null && property.CanRead
-						? property.GetValue(details)
-						: null;
-					var uri = peer != null ? new Uri(peer as string) : null;
-					property = type.GetProperty("Id", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
-					var id = property != null && property.CanRead
-						? property.GetValue(details)
-						: null;
-					var info = new SessionInfo
+					var port = 56429;
+					try
 					{
-						SessionID = arguments.SessionId,
-						ConnectionID = id != null ? (Guid)id : Guid.NewGuid(),
-						EndPoint = new IPEndPoint(IPAddress.Parse(uri != null ? uri.Host : "0.0.0.0"), uri != null ? uri.Port : 16429)
-					};
-					this.Sessions.TryAdd(arguments.SessionId, info);
-					this.OnSessionCreated?.Invoke(info);
-				};
-
-				this.HostedRealm.SessionClosed += (sender, arguments) =>
-				{
-					if (this.Sessions.TryRemove(arguments.SessionId, out SessionInfo info))
-					{
-						info.CloseType = arguments.CloseType.ToString();
-						info.CloseReason = arguments.Reason;
+						port = Convert.ToInt32(ConfigurationManager.AppSettings["StatisticsWebSocketServer:Port"] ?? "56429");
 					}
-					this.OnSessionClosed?.Invoke(info);
-				};
+					catch { }
 
-				this.StatisticsServer?.Start(websocket =>
-				{
-					websocket.OnMessage = message =>
+					this.StatisticsServer = new WebSocketServer($"{(this.SslCertificate != null ? "wss" : "ws")}://0.0.0.0:{port}/")
 					{
-						try
+						Certificate = this.SslCertificate,
+						EnabledSslProtocols = this.SslProtocol
+					};
+
+					this.StatisticsServer.Start(websocket =>
+					{
+						websocket.OnMessage = message =>
 						{
-							var json = JObject.Parse(message);
-							var command = (json.Value<string>("command") ?? json.Value<string>("Command")) ?? "Unknown";
-
-							if (command.ToLower().Equals("info"))
-								Task.Run(() => websocket.Send(this.RouterInfo.ToString(Formatting.None))).ConfigureAwait(false);
-
-							else if (command.ToLower().Equals("connections"))
-								Task.Run(() => websocket.Send(new JObject
-								{
-									{ "Connections", this.Sessions.Count }
-								}.ToString(Formatting.None))).ConfigureAwait(false);
-
-							else if (command.ToLower().Equals("sessions"))
-								Task.Run(() => websocket.Send(this.SessionsInfo.ToString(Formatting.None))).ConfigureAwait(false);
-
-							else if (command.ToLower().Equals("session"))
+							try
 							{
-								if (this.Sessions.TryGetValue(json.Value<long>("SessionID"), out SessionInfo sessionInfo))
-									Task.Run(() => websocket.Send(sessionInfo.ToJson().ToString(Formatting.None))).ConfigureAwait(false);
+								var json = JObject.Parse(message);
+								var command = (json.Value<string>("command") ?? json.Value<string>("Command")) ?? "Unknown";
+
+								if (command.ToLower().Equals("info"))
+									Task.Run(() => websocket.Send(this.RouterInfo.ToString(Formatting.None))).ConfigureAwait(false);
+
+								else if (command.ToLower().Equals("connections"))
+									Task.Run(() => websocket.Send(new JObject
+									{
+										{ "Connections", this.Sessions.Count }
+									}.ToString(Formatting.None))).ConfigureAwait(false);
+
+								else if (command.ToLower().Equals("sessions"))
+									Task.Run(() => websocket.Send(this.SessionsInfo.ToString(Formatting.None))).ConfigureAwait(false);
+
+								else if (command.ToLower().Equals("session"))
+								{
+									if (this.Sessions.TryGetValue(json.Value<long>("SessionID"), out SessionInfo sessionInfo))
+										Task.Run(() => websocket.Send(sessionInfo.ToJson().ToString(Formatting.None))).ConfigureAwait(false);
+									else
+										Task.Run(() => websocket.Send(new JObject
+										{
+											{ "Error", $"Not Found" }
+										}.ToString(Formatting.None))).ConfigureAwait(false);
+								}
+
+								else if (command.ToLower().Equals("update"))
+								{
+									if (this.Sessions.TryGetValue(json.Value<long>("SessionID"), out SessionInfo sessionInfo))
+									{
+										sessionInfo.Name = json.Value<string>("Name");
+										sessionInfo.Description = json.Value<string>("Description");
+									}
+								}
+
 								else
 									Task.Run(() => websocket.Send(new JObject
 									{
-										{ "Error", $"Not Found" }
+										{ "Error", $"Unknown command [{message}]" }
 									}.ToString(Formatting.None))).ConfigureAwait(false);
 							}
-
-							else if (command.ToLower().Equals("update"))
+							catch (Exception ex)
 							{
-								if (this.Sessions.TryGetValue(json.Value<long>("SessionID"), out SessionInfo sessionInfo))
-								{
-									sessionInfo.Name = json.Value<string>("Name");
-									sessionInfo.Description = json.Value<string>("Description");
-								}
-							}
-
-							else
 								Task.Run(() => websocket.Send(new JObject
 								{
-									{ "Error", $"Unknown command [{message}]" }
+									{ "Error", $"Bad command [{message}] => {ex.Message}" }
 								}.ToString(Formatting.None))).ConfigureAwait(false);
-						}
-						catch (Exception ex)
-						{
-							Task.Run(() => websocket.Send(new JObject
-							{
-								{ "Error", $"Bad command [{message}] => {ex.Message}" }
-							}.ToString(Formatting.None))).ConfigureAwait(false);
-						}
-					};
-				});
-
-				this.Host.Open();
-				this.OnStarted?.Invoke();
+							}
+						};
+					});
+				}
+				catch (Exception ex)
+				{
+					this.OnError?.Invoke(ex);
+				}
 			}
-			catch (Exception ex)
+
+			// start
+			startRouter();
+			if (this.Host != null)
 			{
-				this.OnError?.Invoke(ex);
+				if ("true".Equals(ConfigurationManager.AppSettings["StatisticsWebSocketServer:Enable"] ?? "true"))
+					startStatisticServer();
+				this.OnStarted?.Invoke();
 			}
 		}
 
@@ -204,14 +252,15 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 
 		public JObject RouterInfo => new JObject
 		{
-			{ "URI", $"{this.Address}{this.Realm}" },
-			{ "HostedRealmSessionID", $"{this.HostedRealm.SessionId}" },
-			{ "Platform", $"{RuntimeInformation.FrameworkDescription} @ {(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Windows" : RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "Linux" : "macOS")} {RuntimeInformation.OSArchitecture} ({(RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "Macintosh; Intel Mac OS X; " : "")}{RuntimeInformation.OSDescription.Trim()})" },
-			{ "Powered", ServiceComponent.Powered },
 			{ "ProcessID", $"{Process.GetCurrentProcess().Id}" },
 			{ "WorkingMode", this.IsUserInteractive ? "Interactive app" : "Background service" },
+			{ "UseSecuredConnections", $"{this.SslCertificate != null}".ToLower() },
+			{ "ListeningURI", $"{(this.SslCertificate != null ? this.Address.Replace("ws://", "wss://") : this.Address.Replace("wss://", "ws://"))}{this.Realm}" },
+			{ "HostedRealmSessionID", $"{this.HostedRealm.SessionId}" },
 			{ "StatisticsServer", $"{this.StatisticsServer != null}".ToLower() },
-			{ "StatisticsServerPort", this.StatisticsServer != null ? this.StatisticsServer.Port : 56429 }
+			{ "StatisticsServerPort", this.StatisticsServer != null ? this.StatisticsServer.Port : 56429 },
+			{ "Platform", $"{RuntimeInformation.FrameworkDescription} @ {(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Windows" : RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "Linux" : "macOS")} {RuntimeInformation.OSArchitecture} ({(RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "Macintosh; Intel Mac OS X; " : "")}{RuntimeInformation.OSDescription.Trim()})" },
+			{ "Powered", ServiceComponent.Powered }
 		};
 
 		public string RouterInfoString
@@ -220,14 +269,15 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			{
 				var json = this.RouterInfo;
 				return
-					$"- Listening URI: {json.Value<string>("URI")}" + "\r\n\t" +
-					$"- Hosted Realm Session ID: {json.Value<string>("HostedRealmSessionID")}" + "\r\n\t" +
-					$"- Platform: {json.Value<string>("Platform")}" + "\r\n\t" +
-					$"- Powered: {json.Value<string>("Powered")}" + "\r\n\t" +
 					$"- Process ID: {json.Value<string>("ProcessID")}" + "\r\n\t" +
 					$"- Working Mode: {json.Value<string>("WorkingMode")}" + "\r\n\t" +
+					$"- Use Secured Connections: {json.Value<string>("UseSecuredConnections")}" + "\r\n\t" +
+					$"- Listening URI: {json.Value<string>("ListeningURI")}" + "\r\n\t" +
+					$"- Hosted Realm Session ID: {json.Value<string>("HostedRealmSessionID")}" + "\r\n\t" +
 					$"- Statistics Server: {json.Value<string>("StatisticsServer")}" + "\r\n\t" +
-					$"- Statistics Server Port: {json.Value<long>("StatisticsServerPort")}";
+					$"- Statistics Server Port: {json.Value<long>("StatisticsServerPort")}" + "\r\n\t" +
+					$"- Platform: {json.Value<string>("Platform")}" + "\r\n\t" +
+					$"- Powered: {json.Value<string>("Powered")}";
 			}
 		}
 

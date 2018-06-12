@@ -7,7 +7,7 @@
 		<AssemblyTitle>VIEApps NGX WAMP Router</AssemblyTitle>
 		<AssemblyVersion>10.2.0.1806</AssemblyVersion>
 		<FileVersion>10.2.0.1806</FileVersion>
-		<InformationalVersion>v10.2.netstandard-2+rev:2018.06.02</InformationalVersion>
+		<InformationalVersion>v10.2.netstandard-2+rev:2018.06.13</InformationalVersion>
 		<Product>VIEApps NGX</Product>
 		<Company>VIEApps.net</Company>
 		<Authors>VIEApps.net</Authors>
