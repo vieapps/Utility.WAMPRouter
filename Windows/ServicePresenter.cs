@@ -43,10 +43,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 		internal void UpdateLogs(string logs)
 		{
 			if (base.InvokeRequired)
-			{
-				var method = new UpdateLogsDelegator(this.UpdateLogs);
-				base.Invoke(method, new object[] { logs });
-			}
+				base.Invoke(new UpdateLogsDelegator(this.UpdateLogs), new object[] { logs });
 			else
 			{
 				this.Logs.AppendText(logs + "\r\n");

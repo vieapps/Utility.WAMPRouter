@@ -7,9 +7,9 @@
 		<StartupObject>net.vieapps.Services.Utility.WAMPRouter.Program</StartupObject>
 		<AssemblyName>VIEApps.WAMPRouter</AssemblyName>
 		<AssemblyTitle>VIEApps NGX WAMP Router</AssemblyTitle>
-		<AssemblyVersion>10.2.0.1806</AssemblyVersion>
-		<FileVersion>10.2.0.1806</FileVersion>
-		<InformationalVersion>v10.2.netcore-2.1+rev:2018.06.13</InformationalVersion>
+		<AssemblyVersion>10.2.6.1809</AssemblyVersion>
+		<FileVersion>10.2.6.1809</FileVersion>
+		<InformationalVersion>v10.2.netcore-2.1+rev:2018.09.13</InformationalVersion>
 		<Product>VIEApps NGX</Product>
 		<Company>VIEApps.net</Company>
 		<Authors>VIEApps.net</Authors>
@@ -21,8 +21,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.1.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.1.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.1.1" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.1.1" />
 	</ItemGroup>
 
 	<ItemGroup>
