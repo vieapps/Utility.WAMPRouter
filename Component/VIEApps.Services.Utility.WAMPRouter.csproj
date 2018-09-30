@@ -22,7 +22,7 @@
 		<PackageReference Include="MsgPack.Cli" Version="1.0.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
 		<PackageReference Include="System.Configuration.ConfigurationManager" Version="4.5.0" />
-		<PackageReference Include="WampSharp.Default.Router" Version="18.9.1" />
+		<PackageReference Include="WampSharp.Default.Router" Version="18.9.3" />
 	</ItemGroup>
 
 </Project>
