@@ -5,9 +5,9 @@
 		<RootNamespace>net.vieapps.Services.Utility.WAMPRouter</RootNamespace>
 		<AssemblyName>VIEApps.WAMPRouter.Component</AssemblyName>
 		<AssemblyTitle>VIEApps NGX WAMP Router</AssemblyTitle>
-		<AssemblyVersion>10.2.6.1809</AssemblyVersion>
-		<FileVersion>10.2.6.1809</FileVersion>
-		<InformationalVersion>v10.2.netstandard-2+rev:2018.09.21</InformationalVersion>
+		<AssemblyVersion>10.2.1810.1</AssemblyVersion>
+		<FileVersion>10.2.1810.1</FileVersion>
+		<InformationalVersion>v10.2.netstandard-2+rev:2018.10.08</InformationalVersion>
 		<Product>VIEApps NGX</Product>
 		<Company>VIEApps.net</Company>
 		<Authors>VIEApps.net</Authors>
@@ -22,6 +22,7 @@
 		<PackageReference Include="MsgPack.Cli" Version="1.0.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
 		<PackageReference Include="System.Configuration.ConfigurationManager" Version="4.5.0" />
+		<PackageReference Include="System.Reactive" Version="4.1.1" />
 		<PackageReference Include="WampSharp.Default.Router" Version="18.9.3" />
 	</ItemGroup>
 
