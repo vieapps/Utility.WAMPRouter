@@ -14,13 +14,12 @@ using WampSharp.V2;
 using WampSharp.V2.Realm;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Fleck;
 
 namespace net.vieapps.Services.Utility.WAMPRouter
 {
 	public class ServiceComponent
 	{
-		public const string Powered = "WampSharp v18.9.3.netstandard-2-rxnet-4.1-msgpack-1.0-json-11.0-fleck-1.0.3-ssl+rev:2018.10.08";
+		public const string Powered = "WampSharp v18.11.1.netstandard-2-rxnet-4.1.2-msgpack-1.0-json-12.0-fleck-1.0.3-ssl+rev:2018.12.03-lstcmp";
 
 		public IWampHost Host { get; private set; } = null;
 
@@ -48,7 +47,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 
 		public Action<SessionInfo> OnSessionClosed { get; set; } = null;
 
-		WebSocketServer StatisticsServer { get; set; } = null;
+		Fleck.WebSocketServer StatisticsServer { get; set; } = null;
 
 		public void Start(string[] args)
 		{
@@ -156,7 +155,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 					}
 					catch { }
 
-					this.StatisticsServer = new WebSocketServer($"{(this.SslCertificate != null ? "wss" : "ws")}://0.0.0.0:{port}/")
+					this.StatisticsServer = new Fleck.WebSocketServer($"{(this.SslCertificate != null ? "wss" : "ws")}://0.0.0.0:{port}/")
 					{
 						Certificate = this.SslCertificate,
 						EnabledSslProtocols = this.SslProtocol

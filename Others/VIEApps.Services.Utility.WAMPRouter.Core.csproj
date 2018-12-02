@@ -7,9 +7,9 @@
 		<StartupObject>net.vieapps.Services.Utility.WAMPRouter.Program</StartupObject>
 		<AssemblyName>VIEApps.WAMPRouter</AssemblyName>
 		<AssemblyTitle>VIEApps NGX WAMP Router</AssemblyTitle>
-		<AssemblyVersion>10.2.1810.1</AssemblyVersion>
-		<FileVersion>10.2.1810.1</FileVersion>
-		<InformationalVersion>v10.2.netcore-2.1+rev:2018.10.08</InformationalVersion>
+		<AssemblyVersion>10.2.1812.1</AssemblyVersion>
+		<FileVersion>10.2.1812.1</FileVersion>
+		<InformationalVersion>v10.2.netcore-2.1+rev:2018.12.03</InformationalVersion>
 		<Product>VIEApps NGX</Product>
 		<Company>VIEApps.net</Company>
 		<Authors>VIEApps.net</Authors>
