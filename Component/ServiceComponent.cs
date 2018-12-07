@@ -19,7 +19,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 {
 	public class ServiceComponent
 	{
-		public const string Powered = "WampSharp v18.11.1.netstandard-2-rxnet-4.1.2-msgpack-1.0-json-12.0-fleck-1.0.3-ssl+rev:2018.12.03-lstcmp";
+		public const string Powered = "WampSharp v18.11.1.netstandard-2-rxnet-4.1.2-msgpack-1.0-json-12.0-fleck-1.0.3-ssl+rev:2018.12.06-latest.components";
 
 		public IWampHost Host { get; private set; } = null;
 

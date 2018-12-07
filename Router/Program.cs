@@ -11,19 +11,17 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 		static void Main(string[] args)
 		{
 			// prepare
+			Console.OutputEncoding = System.Text.Encoding.UTF8;
 			var isUserInteractive = Environment.UserInteractive && args?.FirstOrDefault(a => a.StartsWith("/daemon")) == null;
-
 			var loggerFactory = new ServiceCollection()
-				.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Information))
+				.AddLogging(builder =>
+				{
+					builder.SetMinimumLevel(LogLevel.Information);
+					if (isUserInteractive)
+						builder.AddConsole();
+				})
 				.BuildServiceProvider()
 				.GetService<ILoggerFactory>();
-
-			if (isUserInteractive)
-			{
-				Console.OutputEncoding = System.Text.Encoding.UTF8;
-				loggerFactory.AddConsole(LogLevel.Information);
-			}
-
 			var logger = loggerFactory.CreateLogger<ServiceComponent>();
 			ServiceComponent serviceComponent = null;
 
