@@ -19,7 +19,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 {
 	public class ServiceComponent
 	{
-		public const string Powered = "WampSharp v18.11.1.netstandard-2-rxnet-4.1.2-msgpack-1.0-json-12.0-fleck-1.0.3-ssl+rev:2018.12.06-latest.components";
+		public const string Powered = "WampSharp v19.3.1.netstandard-2-castle.core.4.3-rxnet-4.1-msgpack-1.0-json-12.0-fleck-1.1-ssl+rev:2019.03.25-latest.components";
 
 		public IWampHost Host { get; private set; } = null;
 
@@ -148,14 +148,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			{
 				try
 				{
-					var port = 56429;
-					try
-					{
-						port = Convert.ToInt32(ConfigurationManager.AppSettings["StatisticsWebSocketServer:Port"] ?? "56429");
-					}
-					catch { }
-
-					this.StatisticsServer = new Fleck.WebSocketServer($"{(this.SslCertificate != null ? "wss" : "ws")}://0.0.0.0:{port}/")
+					this.StatisticsServer = new Fleck.WebSocketServer($"{(this.SslCertificate != null ? "wss" : "ws")}://0.0.0.0:{(Int32.TryParse(ConfigurationManager.AppSettings["StatisticsWebSocketServer:Port"] ?? "56429", out int port) ? port : 56429)}/ ")
 					{
 						Certificate = this.SslCertificate,
 						EnabledSslProtocols = this.SslProtocol
@@ -168,7 +161,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 							try
 							{
 								var json = JObject.Parse(message);
-								var command = (json.Value<string>("command") ?? json.Value<string>("Command")) ?? "Unknown";
+								var command = json.Value<string>("Command") ?? "Unknown";
 
 								if (command.ToLower().Equals("info"))
 									Task.Run(() => websocket.Send(this.RouterInfo.ToString(Formatting.None))).ConfigureAwait(false);

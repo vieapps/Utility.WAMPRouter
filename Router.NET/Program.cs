@@ -30,7 +30,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			if (!Environment.UserInteractive)
 			{
 				var name = "Application";
-				var source = "VIEAppsNGXWAMPRouter";
+				var source = "VIEApps-WAMP-Router";
 
 				if (!EventLog.SourceExists(source))
 					EventLog.CreateEventSource(source, name);

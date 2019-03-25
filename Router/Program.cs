@@ -77,7 +77,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			};
 
 			// start
-			serviceComponent = isUserInteractive
+			serviceComponent = isUserInteractive && args?.FirstOrDefault(a => a.StartsWith("/docker")) == null
 				? new ServiceComponent
 				{
 					OnError = ex => logger.LogError(ex, ex.Message),
@@ -101,7 +101,7 @@ namespace net.vieapps.Services.Utility.WAMPRouter
 			serviceComponent.Start(args);
 
 			// processing commands util got an exit signal
-			if (isUserInteractive)
+			if (isUserInteractive && args?.FirstOrDefault(a => a.StartsWith("/docker")) == null)
 				processCommands();
 
 			// wait until be killed
